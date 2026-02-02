@@ -61,7 +61,7 @@ The goal is to refine the core primitives, validate the negotiation model, and g
 - Explore compatibility with existing agent frameworks
 - Prototype a reference implementation
 
-##Contributing
+## Contributing
 Discussion, critique, and collaboration are welcome.
 
 You can:
