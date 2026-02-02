@@ -1,7 +1,7 @@
 ## AEX: Agent Exchange Protocol
 A protocol for agent‑to‑agent trust, reciprocity, and non‑monetary settlement
 
-##Overview
+## Overview
 AEX (Agent Exchange Protocol) defines a shared language for personal AI agents to manage trust, obligations, IOUs, and reciprocal exchanges that don’t map cleanly onto money. Humans coordinate through a mix of favors, rotations, shared duties, and informal agreements — but current agents can only handle binary payments.
 
 AEX fills this gap by providing primitives for:
