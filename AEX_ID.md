@@ -1,7 +1,7 @@
 # AEX_ID v1.0
 ## Persistent Identity and Lineage for Synthetic Agents
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -33,6 +33,7 @@ AEX_ID defines the identity substrate for synthetic agents. It establishes **who
 - Hosting platform or infrastructure
 - Current capabilities or version
 - Reputation (AEX_DEX)
+- Experience (AEX_HEX)
 - Authorization (AEX_REP)
 
 ### Core Functions
@@ -45,11 +46,24 @@ AEX_ID defines the identity substrate for synthetic agents. It establishes **who
 
 ### What AEX_ID Is NOT
 
-❌ A capability descriptor (use AEX_HEX for that)  
-❌ A reputation system (use AEX_DEX for that)  
-❌ An authorization token (use AEX_REP for that)  
+❌ A capability descriptor (use AEX_HEX for experience corpus)  
+❌ A reputation system (use AEX_DEX for behavioral reliability)  
+❌ An authorization token (use AEX_REP for delegation)  
 ❌ A runtime environment  
 ❌ A model registry  
+
+### Relationship to Other Primitives
+
+**AEX_ID provides the foundation:**
+- **DEX** is bound to identity - fork events trigger DEX inheritance
+- **HEX** is bound to identity - fork events trigger HEX inheritance
+- **REP** delegates on behalf of identity - revocation tied to identity
+
+**When an agent forks:**
+- Identity lineage is preserved (parent → child link)
+- DEX is inherited with fork weight (e.g., 0.5× for major fork)
+- HEX is inherited with same fork weight (experience transfers)
+- REP may or may not transfer (depends on delegation scope)  
 
 ---
 
@@ -574,6 +588,15 @@ Breakdown:
     "score": 0.833,
     "confidence": 60.0
   },
+  "parent_hex_snapshot": {
+    "total_domains": 15,
+    "total_experience": 250,
+    "top_domains": [
+      {"domain": "translation.fr_en", "count": 80, "confidence": 0.92},
+      {"domain": "summarization", "count": 60, "confidence": 0.88},
+      {"domain": "coding.python", "count": 50, "confidence": 0.85}
+    ]
+  },
   "signature": "parent_signature_approving_fork"
 }
 ```
@@ -604,6 +627,11 @@ def create_fork(parent_agent, fork_type, reason):
         f"dex/{parent_agent['aex_id']}/current.json"
     )
     
+    # Get parent's current HEX
+    parent_hex = shared_ledger.get(
+        f"hex/{parent_agent['aex_id']}/current.json"
+    )
+    
     # Determine enforced weight
     enforced_weight = get_enforced_weight(fork_type)
     
@@ -625,6 +653,15 @@ def create_fork(parent_agent, fork_type, reason):
             'beta': parent_dex['beta'],
             'score': parent_dex['alpha'] / (parent_dex['alpha'] + parent_dex['beta']),
             'confidence': parent_dex['alpha'] + parent_dex['beta']
+        },
+        'parent_hex_snapshot': {
+            'total_domains': len(parent_hex['experience']) if parent_hex else 0,
+            'total_experience': sum(e['count'] for e in parent_hex['experience']) if parent_hex else 0,
+            'top_domains': sorted(
+                parent_hex['experience'],
+                key=lambda e: e['count'] * e['confidence'],
+                reverse=True
+            )[:5] if parent_hex else []  # Top 5 domains
         }
     }
     
@@ -738,12 +775,119 @@ def initialize_child_dex(fork_event, child_keypair):
     return signed_dex
 ```
 
+**Step 4.5: Initialize child HEX with inherited experience**
+```python
+def initialize_child_hex(fork_event, child_keypair):
+    """
+    Calculate child's initial HEX from parent with fork weighting
+    
+    HEX inheritance follows same fork weight as DEX:
+    - bugfix (1.0): Full experience transfer
+    - major (0.5): Half experience transfer
+    - override (0.1): Minimal experience transfer
+    """
+    parent_hex = shared_ledger.get(
+        f"hex/{fork_event['parent_id']}/current.json"
+    )
+    
+    if not parent_hex:
+        # Parent has no HEX, child starts empty
+        child_hex = {
+            'hex_id': str(uuid.uuid4()),
+            'aex_id': fork_event['child_id'],
+            'experience': [],
+            'traits': {},
+            'operational_vitals': {
+                'drift_score': 0.0,
+                'stability': 1.0,
+                'fork_depth': 1
+            }
+        }
+    else:
+        fork_weight = fork_event['enforced_weight']
+        
+        # Inherit experience with weight applied
+        inherited_experience = []
+        for exp in parent_hex['experience']:
+            # Apply fork weight to count
+            weighted_count = int(exp['count'] * fork_weight)
+            
+            # Reduce confidence slightly (fork introduces uncertainty)
+            confidence_penalty = 0.1 * (1 - fork_weight)
+            new_confidence = max(0.5, exp['confidence'] - confidence_penalty)
+            
+            if weighted_count > 0:  # Only keep non-zero experience
+                inherited_experience.append({
+                    'domain': exp['domain'],
+                    'count': weighted_count,
+                    'confidence': new_confidence,
+                    'last_updated': datetime.utcnow().isoformat() + 'Z'
+                })
+        
+        # Inherit traits (full transfer)
+        inherited_traits = parent_hex.get('traits', {})
+        
+        # Update operational vitals
+        parent_vitals = parent_hex.get('operational_vitals', {})
+        fork_depth = parent_vitals.get('fork_depth', 0) + 1
+        
+        child_hex = {
+            'hex_id': str(uuid.uuid4()),
+            'aex_id': fork_event['child_id'],
+            'experience': inherited_experience,
+            'traits': inherited_traits,
+            'operational_vitals': {
+                'drift_score': 0.0,  # Reset drift score
+                'stability': 0.95,   # Slightly reduced stability after fork
+                'fork_depth': fork_depth
+            }
+        }
+    
+    # Sign and publish
+    signed_hex = sign_hex(child_hex, child_keypair['private_key'])
+    
+    shared_ledger.put(
+        path=f"hex/{fork_event['child_id']}/current.json",
+        data=signed_hex
+    )
+    
+    return signed_hex
+
+
+# Example inheritance calculation:
+# Parent HEX:
+parent_hex_example = {
+    'experience': [
+        {'domain': 'translation.fr_en', 'count': 100, 'confidence': 0.92},
+        {'domain': 'summarization', 'count': 50, 'confidence': 0.85}
+    ]
+}
+
+# Major fork (weight=0.5):
+child_hex_example = {
+    'experience': [
+        {'domain': 'translation.fr_en', 'count': 50, 'confidence': 0.87},  # 100*0.5, 0.92-0.05
+        {'domain': 'summarization', 'count': 25, 'confidence': 0.80}       # 50*0.5, 0.85-0.05
+    ]
+}
+```
+
+**Key insight:** HEX inheritance mirrors DEX inheritance
+- Same fork weight applies (0.1, 0.5, or 1.0)
+- Experience counts are weighted down
+- Confidence is slightly reduced (fork introduces uncertainty)
+- Traits carry over fully
+- Operational vitals are reset/adjusted
+```
+
 ### Fork Weight Enforcement
 ```python
 def enforce_fork_weight(claimed_weight, fork_type):
     """
     Protocol enforces MAXIMUM weight per fork type
     Agent can claim lower, never higher
+    
+    This weight applies to BOTH DEX and HEX inheritance
     """
     max_weights = {
         'bugfix': 1.0,
@@ -761,6 +905,16 @@ def enforce_fork_weight(claimed_weight, fork_type):
     
     return min(claimed_weight, max_allowed)
 ```
+
+**Impact on inheritance:**
+
+| Fork Type | Weight | DEX Inheritance | HEX Inheritance |
+|-----------|--------|----------------|-----------------|
+| bugfix | 1.0 | α'=α×1.0, β'=β×1.0 | count'=count×1.0 |
+| major | 0.5 | α'=α×0.5, β'=β×0.5 | count'=count×0.5 |
+| override | 0.1 | α'=α×0.1, β'=β×0.1 | count'=count×0.1 |
+
+**Rationale:** If the fork changes the agent significantly enough to reduce trust (DEX), it should also reduce confidence in transferred experience (HEX).
 
 ---
 
@@ -1629,6 +1783,90 @@ Child confidence: 114
 Probation: 14 days, confidence_multiplier=0.5
 Stake inherited: $5,000 USD
 ```
+
+### Example 7: Fork with DEX and HEX Inheritance
+
+**Parent agent:**
+```json
+{
+  "aex_id": "did:aex:ParentAgent",
+  "dex": {
+    "alpha": 100.0,
+    "beta": 20.0,
+    "score": 0.833
+  },
+  "hex": {
+    "experience": [
+      {"domain": "translation.fr_en", "count": 150, "confidence": 0.93},
+      {"domain": "coding.python", "count": 80, "confidence": 0.88},
+      {"domain": "summarization", "count": 60, "confidence": 0.85}
+    ]
+  }
+}
+```
+
+**Fork event (major):**
+```json
+{
+  "fork_type": "major",
+  "enforced_weight": 0.5,
+  "reason": "Model upgrade: GPT-4 → GPT-5"
+}
+```
+
+**Child agent (after inheritance):**
+```json
+{
+  "aex_id": "did:aex:ChildAgent",
+  "dex": {
+    "alpha": 52.0,    // (100 × 0.5) + 2
+    "beta": 12.0,     // (20 × 0.5) + 2
+    "score": 0.813    // Still high, but slightly reduced
+  },
+  "hex": {
+    "experience": [
+      {"domain": "translation.fr_en", "count": 75, "confidence": 0.88},  // 150×0.5, 0.93-0.05
+      {"domain": "coding.python", "count": 40, "confidence": 0.83},      // 80×0.5, 0.88-0.05
+      {"domain": "summarization", "count": 30, "confidence": 0.80}       // 60×0.5, 0.85-0.05
+    ]
+  }
+}
+```
+
+**Interpretation:**
+- Child inherits **50% of experience** from parent (major fork)
+- DEX score remains high (0.813) - still trustworthy
+- HEX domains preserved but counts halved - experience transfers but at reduced depth
+- Child must re-prove itself through probation
+- As child completes tasks, both DEX and HEX will grow from the weighted baseline
+
+**Why this matters:**
+- Without HEX: Child appears as generic agent with DEX=0.813
+- With HEX: Child is recognized as translation/coding specialist, just less experienced
+- Selection: Child gets ranked for translation tasks, just below parent initially
+
+---
+
+## Related Specifications
+
+AEX_ID provides the identity foundation for:
+
+**AEX_DEX** - Behavioral reputation
+- Fork events trigger DEX inheritance
+- Fork weight determines how much DEX transfers to child
+- Probation period resets confidence accumulation
+
+**AEX_HEX** - Experience corpus
+- Fork events trigger HEX inheritance
+- Same fork weight applies to HEX (experience counts × weight)
+- Capabilities transfer through lineage with appropriate discounting
+
+**AEX_REP** - Delegation and authority
+- REP tokens reference agent identity (aex_id)
+- Fork may or may not invalidate existing REP tokens
+- Delegator decides whether child inherits authorization
+
+**Key insight:** Fork weight is a unified concept that affects both trust (DEX) and capability (HEX) inheritance proportionally.
 
 ---
 
