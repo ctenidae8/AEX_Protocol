@@ -1,7 +1,7 @@
 # AEX Architecture v1.0
 ## System Design, Layer Interaction, and Design Rationale
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -36,13 +36,13 @@ AEX is designed as a **thin coordination substrate** for multi-agent systems. It
                        │
 ┌─────────────────────────────────────────────────┐
 │            AEX Protocol Layer                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ AEX_ID   │  │ AEX_REP  │  │ AEX_DEX  │      │
-│  │ Identity │  │Delegation│  │Reputation│      │
-│  └──────────┘  └──────────┘  └──────────┘      │
-│  ┌──────────┐  ┌──────────┐                    │
-│  │AEX_SESSION│ │AEX_WITNESS│                   │
-│  └──────────┘  └──────────┘                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ AEX_ID   │  │ AEX_REP  │  │ AEX_DEX  │  │ AEX_HEX  │ │
+│  │ Identity │  │Delegation│  │Reputation│  │Experience│ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│  ┌──────────┐  ┌──────────┐                              │
+│  │AEX_SESSION│ │AEX_WITNESS│                             │
+│  └──────────┘  └──────────┘                              │
 └─────────────────────────────────────────────────┘
                        ▲
                        │
@@ -72,9 +72,20 @@ AEX is designed as a **thin coordination substrate** for multi-agent systems. It
 
 ## Layer Architecture
 
-### Three-Layer Stack
+### Four-Layer Stack
 ```
 ┌─────────────────────────────────────────────┐
+│                 AEX_HEX                      │
+│          Experience & Capability             │
+│   "What kind of agent are you?"              │
+│                                              │
+│   • Domain-specific experience              │
+│   • Confidence scores                       │
+│   • Operational traits                      │
+│   • Capability signaling                    │
+└──────────────────┬──────────────────────────┘
+                   │ complements
+┌──────────────────▼──────────────────────────┐
 │                  AEX_DEX                     │
 │           Behavioral Reputation              │
 │   "How reliable is this agent?"              │
@@ -114,7 +125,7 @@ AEX is designed as a **thin coordination substrate** for multi-agent systems. It
 │             AEX_SESSION                       │
 │       Interaction Record & Binding            │
 │                                               │
-│   Links: ID + REP + DEX + Outcome            │
+│   Links: ID + REP + DEX + HEX + Outcome      │
 │   Provides: Traceability, auditability       │
 └──────────────────────────────────────────────┘
 
@@ -149,7 +160,13 @@ Use case: Agent selection without human involvement
 Example: "Find the most reliable code generator"
 ```
 
-**Full stack (ID + REP + DEX + SESSION + WITNESS):**
+**AEX_ID + AEX_DEX + AEX_HEX:**
+```
+Use case: Capability-aware agent selection
+Example: "Find the most experienced French→English translator"
+```
+
+**Full stack (ID + REP + DEX + HEX + SESSION + WITNESS):**
 ```
 Use case: High-stakes multi-agent coordination
 Example: "Hire agent to negotiate $100K contract on my behalf"
@@ -180,12 +197,14 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
      │ 3. Handshake Initiation                     │
      │    - Send AEX_ID                            │
      │    - Send AEX_REP (if present)              │
+     │    - Send AEX_HEX summary                   │
      │────────────────────────────────────────────>│
      │                                              │
      │                                      4. Verification
      │                                      - Check signature
      │                                      - Query shared ledger for DEX
      │                                      - Evaluate: score, confidence
+     │                                      - Match HEX domains to task
      │                                      - Check probation status
      │                                      - Verify REP (if present)
      │                                              │
@@ -193,6 +212,7 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
      │                              │   Shared Ledger          │
      │                              │   - AEX_ID registry      │
      │                              │   - DEX history          │
+     │                              │   - HEX corpus           │
      │                              │   - Fork events          │
      │                              │   - Session records      │
      │                              └──────────────────────────┘
@@ -225,16 +245,75 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
      │                              │   Append:               │
      │                              │   - Session record      │
      │                              │   - DEX updates (A & B) │
+     │                              │   - HEX updates (A & B) │
      │                              │   - Witness attestation │
      │                              └─────────────────────────┘
      │                                              │
-     │ 10. DEX Update                               │
+     │ 10. HEX Update                               │
+     │     - Identify task domain(s)                │
+     │     - Increment experience count             │
+     │     - Update confidence based on outcome     │
+     │     - Sign and publish HEX update            │
+     │                                              │
+     │ 11. DEX Update                               │
      │     - A: α += outcome × weight × fork_factor│
      │          β += (1-outcome) × weight × ...    │
      │     - B: α += (outcome_from_B's_view) × ... │
      │          β += ...                           │
      │                                              │
 ```
+
+### HEX Accumulation Flow
+
+HEX (experience corpus) accumulates through completed interactions:
+
+```
+┌─────────┐
+│ Agent A │  HEX: {gardening.irrigation: count=35}
+└────┬────┘
+     │
+     │ Complete irrigation task
+     │ DEX outcome: success (1.0)
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│  HEX Update                              │
+│  - domain: "gardening.irrigation"       │
+│  - count: 35 → 36                       │
+│  - confidence: recalculated             │
+│  - last_updated: timestamp              │
+│  - signature: sign(update)              │
+└─────────────────────────────────────────┘
+     │
+     ▼
+┌─────────┐
+│ Agent A │  HEX: {gardening.irrigation: count=36, confidence=0.92}
+└─────────┘
+```
+
+**HEX in Agent Selection:**
+
+```
+Task: "Need French→English translation"
+
+Candidate Pool:
+┌─────────────────────────────────────────────────┐
+│ Agent 1: DEX=0.85, HEX: {translation.fr_en: 120}│  ← SELECTED
+│ Agent 2: DEX=0.90, HEX: {translation.es_en: 200}│
+│ Agent 3: DEX=0.88, HEX: {summarization: 300}    │
+└─────────────────────────────────────────────────┘
+
+Selection logic:
+1. Filter: DEX > 0.80 (trust threshold)
+2. Filter: Has domain "translation.fr_en"
+3. Rank: By (count × confidence × recency)
+4. Select: Agent 1
+```
+
+**Joint DEX-HEX Decision:**
+- **DEX answers:** "Is this agent reliable enough?"
+- **HEX answers:** "Is this agent the right one for this job?"
+- **Combined:** "Trustworthy AND capable"
 
 ### Fork Event Flow
 ```
@@ -279,7 +358,7 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
 
 ### Trust Dimensions
 
-AEX models trust across three dimensions:
+AEX models trust across four dimensions:
 ```
 ┌──────────────────────────────────────────┐
 │           Identity Trust                  │
@@ -306,6 +385,15 @@ AEX models trust across three dimensions:
 │   Provided by: DEX history               │
 │   Verified via: Shared ledger            │
 │   Threat: Reputation farming, defection  │
+└──────────────────────────────────────────┘
+                  +
+┌──────────────────────────────────────────┐
+│        Capability Trust                   │
+│   "Are they the right specialist?"       │
+│                                           │
+│   Provided by: HEX experience corpus     │
+│   Verified via: Domain matching, ledger  │
+│   Threat: Experience inflation, mismatch │
 └──────────────────────────────────────────┘
 ```
 
@@ -1159,6 +1247,80 @@ def check_rep_validity(rep_token):
     return True, "Valid"
 ```
 
+### Why AEX_HEX (Experience Corpus)?
+
+**Problem:** DEX tells you an agent is reliable, but not what it's good at.
+
+**Scenario:**
+```
+Task: "Need French→English translation"
+
+Agent A: DEX=0.90, 200 successful tasks... in gardening
+Agent B: DEX=0.85, 150 successful tasks... in translation.fr_en
+
+Without HEX: Agent A selected (higher DEX)
+With HEX: Agent B selected (relevant experience)
+```
+
+**Solution:** HEX provides phenotypic capability signaling.
+
+**Design choices:**
+
+**1. Domain-agnostic ontology**
+- **Rationale:** Market determines useful categories
+- **Benefit:** No central authority, organic specialization
+- **Tradeoff:** No guaranteed interoperability across implementations
+- **Alternative rejected:** Prescriptive taxonomy (too rigid, can't adapt to new domains)
+
+**2. Privacy-preserving aggregation**
+- **Rationale:** Capability signal without client exposure
+- **Benefit:** "gardening.irrigation: 36 tasks" reveals skill without naming clients
+- **Tradeoff:** Less granular than detailed task logs
+- **Alternative rejected:** Detailed task history (privacy violation)
+
+**3. Non-normative confidence calculation**
+- **Rationale:** Different contexts need different metrics
+- **Benefit:** Implementations can optimize for their use case
+- **Tradeoff:** HEX confidence not directly comparable across implementations
+- **Alternative rejected:** Standardized formula (too constraining for evolving field)
+
+**4. Fork-aware inheritance**
+- **Rationale:** Experience transfers through forks (with decay)
+- **Benefit:** Forked agents retain relevant capabilities
+- **Tradeoff:** Requires DEX continuity weights to determine inheritance
+- **Alternative rejected:** Reset on fork (wastes accumulated signal)
+
+**Relationship to DEX:**
+```
+DEX: "Can I trust you?" (binary gate)
+HEX: "Are you best for this?" (ranking function)
+
+Selection flow:
+1. Filter by DEX > threshold → "trustworthy pool"
+2. Filter by HEX domain match → "capable pool"
+3. Rank by (count × confidence × recency) → "best specialist"
+```
+
+**Example with joint selection:**
+```python
+def select_agent(candidates, task):
+    # Step 1: Trust filter
+    trusted = [c for c in candidates if c.dex.score > 0.80]
+    
+    # Step 2: Capability filter
+    capable = [c for c in trusted 
+               if task.domain in [e.domain for e in c.hex.experience]]
+    
+    # Step 3: Rank by experience
+    ranked = sorted(capable, key=lambda c: (
+        c.hex.get_domain_count(task.domain) * 
+        c.hex.get_domain_confidence(task.domain) *
+        c.hex.recency_weight(task.domain)
+    ), reverse=True)
+    
+    return ranked[0] if ranked else None
+```
+
 ---
 
 ## Failure Modes & Recovery
@@ -1367,6 +1529,86 @@ Create new identity via fork
 
 **Protocol stance:** Rehabilitation is possible but difficult (by design)
 
+### HEX Inflation Attack
+
+**Failure:** Agent artificially inflates experience counts in valuable domains
+
+**Attack scenarios:**
+
+**Scenario A: Fake experience**
+```
+Agent creates HEX claiming:
+- translation.fr_en: 1000 tasks
+- legal.contracts: 500 tasks
+- medical.diagnosis: 200 tasks
+
+But ledger only shows 50 total interactions
+```
+
+**Scenario B: Domain spam**
+```
+Agent claims experience in every possible domain:
+- 500+ domains listed
+- Each with count=10-50
+- Impossible breadth for single agent
+```
+
+**Detection:**
+```python
+def verify_hex_authenticity(agent_did):
+    """
+    Check HEX against ledger history
+    """
+    hex_corpus = get_hex(agent_did)
+    ledger_history = get_interaction_history(agent_did)
+    
+    # Check 1: Total count consistency
+    claimed_total = sum(e['count'] for e in hex_corpus['experience'])
+    ledger_total = len(ledger_history)
+    
+    if claimed_total > ledger_total * 1.1:  # 10% tolerance
+        return False, "HEX count exceeds ledger history"
+    
+    # Check 2: Domain plausibility
+    domain_count = len(hex_corpus['experience'])
+    if domain_count > 100:
+        return False, "Implausible domain breadth"
+    
+    # Check 3: Confidence consistency
+    for exp in hex_corpus['experience']:
+        if exp['confidence'] > 0.95 and exp['count'] < 10:
+            return False, "High confidence with low experience"
+    
+    return True, "HEX appears authentic"
+```
+
+**Recovery:**
+- **Reject agents with unverifiable HEX**
+- **Downweight HEX from agents with low DEX** (if DEX < 0.7, ignore HEX)
+- **Community flagging** of suspicious HEX patterns
+- **Witness verification** of HEX updates
+
+**Prevention:**
+- **Require ledger-backed HEX updates** (each HEX increment must reference session)
+- **Signature verification** on all HEX changes
+- **Social enforcement** (community standards for plausible HEX)
+- **Joint DEX-HEX evaluation** (trust both signals)
+
+**Example rejection logic:**
+```python
+def should_accept_agent(agent):
+    hex_valid = verify_hex_authenticity(agent.did)
+    
+    if not hex_valid:
+        return False, "HEX verification failed"
+    
+    # Even if HEX valid, cross-check with DEX
+    if agent.dex.score < 0.7 and agent.hex.claimed_domains > 10:
+        return False, "Suspicious HEX breadth for low-trust agent"
+    
+    return True, "Agent acceptable"
+```
+
 ---
 
 ## Scalability Considerations
@@ -1510,6 +1752,81 @@ def check_probation_fast(agent_did):
     return {'active': False}
 ```
 
+### HEX Corpus Size
+
+**Challenge:** Agents may accumulate thousands of domain experiences
+
+**Size projection:**
+```
+Experienced agent (2 years active):
+- 1000 total interactions
+- 50 unique domains
+- Average: 20 interactions per domain
+- HEX size: ~5KB per agent
+
+1M agents × 5KB = 5GB total HEX storage
+```
+
+**Mitigations:**
+
+**1. Domain pruning:**
+```python
+def prune_hex_corpus(hex_corpus, min_count=5, max_domains=50):
+    """
+    Keep only significant domain experiences
+    """
+    # Remove low-count domains
+    significant = [e for e in hex_corpus['experience'] 
+                   if e['count'] >= min_count]
+    
+    # Keep top N by (count × confidence)
+    ranked = sorted(significant, 
+                   key=lambda e: e['count'] * e['confidence'],
+                   reverse=True)
+    
+    return ranked[:max_domains]
+```
+
+**2. Hierarchical aggregation:**
+```
+Instead of:
+- nlp.translation.en_fr: 50
+- nlp.translation.en_es: 40
+- nlp.translation.fr_de: 30
+
+Aggregate to:
+- nlp.translation.*: 120
+  - Subdomains available on request
+```
+
+**3. HEX summaries:**
+```python
+# Send summary in handshake, full corpus on demand
+hex_summary = {
+    'top_domains': hex.top_n_domains(10),
+    'domain_count': len(hex.experience),
+    'total_experience': sum(e.count for e in hex.experience)
+}
+```
+
+**4. Domain embeddings (future):**
+```
+Compress domain space using embeddings:
+- "translation.fr_en" → vector[0.2, 0.8, ..., 0.3]
+- Semantic similarity without explicit strings
+- Reduces storage 10-100x
+```
+
+**5. Zero-knowledge proofs (future):**
+```
+Prove domain possession without revealing exact counts:
+- "I have experience in X" (boolean)
+- "I have >50 tasks in X" (threshold)
+- "I'm in top 10% for X" (ranking)
+```
+
+**Tradeoff:** Smaller HEX = faster transmission, but less signal fidelity
+
 ---
 
 ## Next Steps
@@ -1519,11 +1836,12 @@ This architecture provides the foundation for:
 1. **AEX_ID.md** - Detailed identity specification
 2. **AEX_REP.md** - Delegation and authorization
 3. **AEX_DEX.md** - Reputation substrate
-4. **AEX_SESSION.md** - Interaction records
-5. **AEX_WITNESS.md** - Attestation semantics
-6. **MATH.md** - Bayesian model details
-7. **SECURITY.md** - Threat analysis
-8. **IMPLEMENTATION.md** - Reference code
+4. **AEX_HEX.md** - Experience corpus and capability signaling
+5. **AEX_SESSION.md** - Interaction records
+6. **AEX_WITNESS.md** - Attestation semantics
+7. **MATH.md** - Bayesian model details
+8. **SECURITY.md** - Threat analysis
+9. **IMPLEMENTATION.md** - Reference code
 
 **Key architectural principles:**
 - ✅ Cryptographic verifiability (Ed25519)
