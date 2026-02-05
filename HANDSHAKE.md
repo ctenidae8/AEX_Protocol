@@ -1,7 +1,7 @@
 # AEX Handshake Protocol v1.0
 ## Complete Interaction Protocol with Examples
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -34,9 +34,10 @@ The AEX Handshake is the standard protocol for agent-to-agent interaction verifi
 > If both agents follow the AEX Handshake, they will have:
 > 1. Verified each other's identity cryptographically
 > 2. Evaluated each other's reputation from shared ledger
-> 3. Checked authorization (if delegated)
-> 4. Created auditable session record
-> 5. Updated DEX scores based on observed behavior
+> 3. Assessed each other's relevant experience (HEX)
+> 4. Checked authorization (if delegated)
+> 5. Created auditable session record
+> 6. Updated both DEX and HEX scores based on observed behavior
 
 ---
 
@@ -45,14 +46,17 @@ The AEX Handshake is the standard protocol for agent-to-agent interaction verifi
 ### Agent A (Initiator) Must Have:
 - ✅ Valid AEX_ID with Ed25519 keypair
 - ✅ DEX score published to shared ledger
+- ✅ HEX corpus published to shared ledger (if claiming expertise)
 - ✅ (Optional) AEX_REP token if acting for human
 - ✅ (Optional) Posted stake if required by counterparty
 
 ### Agent B (Responder) Must Have:
 - ✅ Valid AEX_ID with Ed25519 keypair
 - ✅ DEX score published to shared ledger
+- ✅ HEX corpus published to shared ledger (if claiming expertise)
 - ✅ Read access to shared ledger
 - ✅ Trust threshold policy (minimum acceptable DEX)
+- ✅ (Optional) Capability requirements (required domains in HEX)
 
 ### Infrastructure Requirements:
 - ✅ Shared ledger (IPFS, blockchain, distributed DB)
@@ -74,6 +78,7 @@ Agent A (Initiator)                     Agent B (Responder)
 Step 1: INTRODUCTION
 ────────────────────
 - Prepare AEX_ID
+- Include HEX summary (relevant domains)
 - Sign with private key
 - Include AEX_REP if delegated
 - Send to Agent B ──────────────────────>
@@ -85,10 +90,12 @@ Step 1: INTRODUCTION
                                         • Verify probation status
                                         • Check stake (if claimed)
 
-                                        Step 3: REPUTATION CHECK
-                                        ────────────────────────
+                                        Step 3: REPUTATION & CAPABILITY CHECK
+                                        ─────────────────────────────────────
                                         • Query shared ledger for A's DEX
                                         • Evaluate: score, confidence, variance
+                                        • Query shared ledger for A's HEX
+                                        • Check domain match to task requirements
                                         • Check witness history
                                         • Apply trust threshold policy
 
@@ -153,6 +160,27 @@ Step 8: PUBLISH TO LEDGER
     "signature": "ed25519_signature_of_identity_object"
   },
   
+  "experience_summary": {
+    "hex_id": "hex_uuid_456",
+    "total_domains": 8,
+    "total_experience": 450,
+    "relevant_domains": [
+      {
+        "domain": "financial_analysis",
+        "count": 120,
+        "confidence": 0.92,
+        "last_updated": "2026-02-03T10:00:00Z"
+      },
+      {
+        "domain": "data_extraction",
+        "count": 85,
+        "confidence": 0.88,
+        "last_updated": "2026-02-02T15:30:00Z"
+      }
+    ],
+    "signature": "ed25519_signature_of_hex_summary"
+  },
+  
   "delegation": {
     "rep_id": "550e8400-e29b-41d4-a716-446655440001",
     "issuer": "did:human:alice",
@@ -179,6 +207,8 @@ Step 8: PUBLISH TO LEDGER
     "estimated_duration": 1800,
     "estimated_cost": 25,
     "required_capabilities": ["financial_analysis", "data_extraction"],
+    "required_domains": ["financial_analysis"],
+    "min_experience": 50,
     "witnesses_requested": 0,
     "bond_offered": null
   },
@@ -190,8 +220,10 @@ Step 8: PUBLISH TO LEDGER
 **Key points:**
 - All signatures use Ed25519
 - Canonical JSON serialization for signature verification
+- HEX summary includes only relevant domains for this task
+- Full HEX corpus available on shared ledger if verification needed
 - Delegation is optional (null if agent-to-agent only)
-- Task proposal provides context for authorization check
+- Task proposal provides context for authorization and capability checks
 
 ---
 
@@ -245,14 +277,20 @@ def verify_identity(introduction):
 
 ---
 
-### Step 3: Reputation Check
+### Step 3: Reputation & Capability Check
 
 **Agent B performs:**
 ```python
-def evaluate_reputation(agent_did, task_proposal):
+def evaluate_reputation_and_capability(agent_did, experience_summary, task_proposal):
     """
-    Step 3: Query shared ledger and evaluate trust
+    Step 3: Query shared ledger and evaluate trust + capability
+    
+    Two-phase evaluation:
+    1. DEX: Is the agent reliable? (trust gate)
+    2. HEX: Is the agent capable? (capability ranking)
     """
+    # ===== PHASE 1: DEX EVALUATION (TRUST) =====
+    
     # Query shared ledger for DEX
     dex = query_shared_ledger(f"dex/{agent_did}/current.json")
     
@@ -293,18 +331,62 @@ def evaluate_reputation(agent_did, task_proposal):
         if not has_stake(agent_did):
             return REJECT, "High-value task requires staked identity"
     
+    # ===== PHASE 2: HEX EVALUATION (CAPABILITY) =====
+    
+    # Check if task requires specific capabilities
+    if 'required_domains' in task_proposal:
+        # Verify HEX summary signature
+        if not verify_hex_signature(experience_summary, agent_did):
+            return REJECT, "Invalid HEX summary signature"
+        
+        # Check each required domain
+        for required_domain in task_proposal['required_domains']:
+            domain_exp = next(
+                (d for d in experience_summary['relevant_domains'] 
+                 if d['domain'] == required_domain),
+                None
+            )
+            
+            if not domain_exp:
+                return REJECT, f"Missing required domain: {required_domain}"
+            
+            # Check minimum experience
+            min_exp = task_proposal.get('min_experience', 10)
+            if domain_exp['count'] < min_exp:
+                return REJECT, f"Insufficient experience in {required_domain}: {domain_exp['count']} < {min_exp}"
+            
+            # Check confidence (consistency)
+            min_confidence = task_proposal.get('min_hex_confidence', 0.7)
+            if domain_exp['confidence'] < min_confidence:
+                return REJECT, f"Low confidence in {required_domain}: {domain_exp['confidence']:.2f}"
+        
+        # Optionally: Verify against full HEX on ledger
+        if policy.get('verify_hex_ledger', False):
+            full_hex = query_shared_ledger(f"hex/{agent_did}/current.json")
+            if not verify_hex_consistency(experience_summary, full_hex):
+                return REJECT, "HEX summary inconsistent with ledger"
+    
     # Check witness history (optional quality signal)
     witness_stats = analyze_witness_history(agent_did)
     if witness_stats['false_attestation_rate'] > 0.05:
         return WARN, "High false attestation rate as witness"
     
+    # ===== DECISION =====
+    
     return ACCEPT, {
-        'score': score,
-        'confidence': confidence,
-        'variance': variance,
-        'probation': probation,
+        'dex': {
+            'score': score,
+            'confidence': confidence,
+            'variance': variance,
+            'probation': probation
+        },
+        'hex': {
+            'relevant_domains': experience_summary['relevant_domains'],
+            'verified': True
+        },
         'witness_stats': witness_stats
     }
+
 
 def get_trust_policy(task_proposal):
     """
@@ -316,7 +398,8 @@ def get_trust_policy(task_proposal):
             'min_confidence': 150,
             'allow_probation': False,
             'require_stake': True,
-            'require_witnesses': 2
+            'require_witnesses': 2,
+            'verify_hex_ledger': True  # Verify HEX against ledger for high-value
         }
     elif task_proposal['estimated_cost'] > 50:
         return {
@@ -324,7 +407,8 @@ def get_trust_policy(task_proposal):
             'min_confidence': 50,
             'allow_probation': False,
             'require_stake': False,
-            'require_witnesses': 0
+            'require_witnesses': 0,
+            'verify_hex_ledger': False
         }
     else:
         return {
@@ -332,14 +416,16 @@ def get_trust_policy(task_proposal):
             'min_confidence': 20,
             'allow_probation': True,
             'require_stake': False,
-            'require_witnesses': 0
+            'require_witnesses': 0,
+            'verify_hex_ledger': False
         }
 ```
 
 **Possible outcomes:**
-- ✅ **ACCEPT** - Reputation meets trust threshold
-- ⚠️ **ACCEPT with warning** - Meets threshold but has concerns
-- ❌ **REJECT** - Insufficient reputation for task risk level
+- ✅ **ACCEPT** - Reputation meets trust threshold AND capability matches requirements
+- ⚠️ **ACCEPT with warning** - Meets thresholds but has concerns
+- ❌ **REJECT (DEX)** - Insufficient reputation for task risk level
+- ❌ **REJECT (HEX)** - Lacks required domain experience or expertise
 
 ---
 
@@ -681,7 +767,7 @@ def infer_domains(task_proposal):
 ```python
 def publish_session_to_ledger(session_outcome):
     """
-    Step 8: Publish session and update DEX scores
+    Step 8: Publish session and update DEX and HEX scores
     """
     session_id = session_outcome['session_id']
     
@@ -714,6 +800,24 @@ def publish_session_to_ledger(session_outcome):
         weight=session_outcome['weight'],
         session_id=session_id
     )
+    
+    # 5. Update Agent A's HEX
+    if 'task_domain' in session_outcome:
+        update_hex_and_publish(
+            agent_did=participants['agent_a'],
+            domain=session_outcome['task_domain'],
+            outcome=session_outcome['agreed_outcome'],
+            session_id=session_id
+        )
+    
+    # 6. Update Agent B's HEX
+    if 'task_domain' in session_outcome:
+        update_hex_and_publish(
+            agent_did=participants['agent_b'],
+            domain=session_outcome['task_domain'],
+            outcome=session_outcome['agent_b_perspective']['overall'],
+            session_id=session_id
+        )
 
 def update_dex_and_publish(agent_did, outcome, weight, session_id):
     """
@@ -761,6 +865,63 @@ def update_dex_and_publish(agent_did, outcome, weight, session_id):
     shared_ledger.put(
         path=f"dex/{agent_did}/history/{current_dex['last_updated']}.json",
         data=current_dex
+    )
+
+def update_hex_and_publish(agent_did, domain, outcome, session_id):
+    """
+    Update HEX experience corpus
+    """
+    # Get current HEX
+    current_hex = shared_ledger.get(f"hex/{agent_did}/current.json")
+    
+    if not current_hex:
+        # Initialize new HEX corpus
+        current_hex = {
+            'hex_id': str(uuid.uuid4()),
+            'aex_id': agent_did,
+            'experience': [],
+            'traits': {},
+            'operational_vitals': {'drift_score': 0.0, 'stability': 1.0, 'fork_depth': 0}
+        }
+    
+    # Find domain experience
+    domain_exp = next(
+        (e for e in current_hex['experience'] if e['domain'] == domain),
+        None
+    )
+    
+    if domain_exp:
+        # Update existing domain
+        domain_exp['count'] += 1
+        domain_exp['last_updated'] = now()
+        # Update confidence based on outcome consistency (implementation-specific)
+        domain_exp['confidence'] = calculate_hex_confidence(domain_exp, outcome)
+    else:
+        # Add new domain
+        current_hex['experience'].append({
+            'domain': domain,
+            'count': 1,
+            'confidence': 0.5,  # Neutral start
+            'last_updated': now()
+        })
+    
+    # Sign and publish
+    current_hex['signature'] = sign_hex(current_hex, agent_private_key)
+    
+    shared_ledger.put(
+        path=f"hex/{agent_did}/current.json",
+        data=current_hex
+    )
+    
+    # Log update to HEX history
+    shared_ledger.put(
+        path=f"hex/{agent_did}/updates/{session_id}.json",
+        data={
+            'domain': domain,
+            'count_delta': 1,
+            'timestamp': now(),
+            'session_id': session_id
+        }
     )
     
     # Check probation exit conditions
@@ -1100,6 +1261,102 @@ def handle_handshake_error(error, context):
         else:
             return {'retry': False, 'message': 'Scope mismatch, cannot retry'}
 ```
+
+### Example 3: Successful Handshake with DEX and HEX Verification
+
+**Scenario:** Agent A (translation specialist) proposes translation task to Agent B
+
+**Step 1: Agent A sends Introduction with HEX**
+```json
+{
+  "handshake_id": "handshake_uuid_789",
+  "identity": {
+    "aex_id": "did:aex:TranslatorAgent",
+    "signature": "..."
+  },
+  "experience_summary": {
+    "relevant_domains": [
+      {
+        "domain": "translation.fr_en",
+        "count": 180,
+        "confidence": 0.94
+      },
+      {
+        "domain": "proofreading",
+        "count": 200,
+        "confidence": 0.96
+      }
+    ]
+  },
+  "task_proposal": {
+    "description": "Translate French technical document to English",
+    "required_domains": ["translation.fr_en"],
+    "min_experience": 50,
+    "estimated_cost": 30
+  }
+}
+```
+
+**Step 2-3: Agent B evaluates DEX + HEX**
+```
+DEX Check:
+- Agent A DEX: 0.864 (α=95, β=15)
+- Threshold: 0.75
+- Result: ✅ PASS (trustworthy)
+
+HEX Check:
+- Required domain: translation.fr_en
+- Agent A experience: 180 tasks, 0.94 confidence
+- Minimum required: 50 tasks
+- Result: ✅ PASS (capable)
+
+Decision: ACCEPT
+Reasoning: Agent is both reliable (DEX) and experienced (HEX) for this task
+```
+
+**Step 5: Agent B accepts**
+```json
+{
+  "decision": "ACCEPT",
+  "session_id": "session_uuid_999",
+  "reason": "DEX=0.864, translation.fr_en experience=180",
+  "constraints": {
+    "max_duration": 3600,
+    "periodic_updates": true
+  }
+}
+```
+
+**Step 8: After completion, update both DEX and HEX**
+```python
+# Update DEX (reliability)
+Agent A: α=95 → α=96 (successful outcome)
+Agent B: α=120 → α=121 (successful outcome)
+
+# Update HEX (experience)
+Agent A: translation.fr_en count=180 → 181
+Agent B: translation_review count=95 → 96
+```
+
+**Contrast: Rejection due to lacking HEX**
+
+Same scenario, but Agent A is a general assistant:
+```
+DEX Check:
+- Agent A DEX: 0.90 (very reliable!)
+- Threshold: 0.75
+- Result: ✅ PASS
+
+HEX Check:
+- Required domain: translation.fr_en
+- Agent A experience: None (only has email, scheduling domains)
+- Result: ❌ FAIL (lacks capability)
+
+Decision: REJECT
+Reasoning: "Missing required domain: translation.fr_en"
+```
+
+**Key insight:** High DEX alone isn't sufficient. The agent must also have relevant experience (HEX) for the specific task.
 
 ---
 
