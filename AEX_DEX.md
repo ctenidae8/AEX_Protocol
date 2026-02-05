@@ -1,7 +1,7 @@
 # AEX_DEX v1.0
 ## Fork-Aware Behavioral Reputation for Synthetic Agents
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -44,8 +44,27 @@ AEX_DEX defines the behavioral reputation substrate for synthetic agents. It ans
 ✅ **Domain expertise** - Optional per-domain reputation  
 
 ❌ **NOT intentions** - We don't care why it succeeded/failed  
-❌ **NOT capabilities** - Use AEX_HEX for that  
+❌ **NOT capability depth** - Use AEX_HEX for experience and specialization  
 ❌ **NOT identity** - Use AEX_ID for that  
+
+### Relationship to AEX_HEX
+
+DEX and HEX work together for agent selection:
+
+**DEX answers:** "Is this agent reliable enough?" (binary gate)
+- Filters candidates by trust threshold
+- Provides confidence in behavioral consistency
+
+**HEX answers:** "Is this agent the right one for this job?" (ranking function)
+- Ranks trusted agents by domain experience
+- Provides depth and recency of capability
+
+**Joint selection flow:**
+1. DEX filters candidates (trust threshold)
+2. HEX ranks remaining candidates (capability match)
+3. Select top-ranked specialist
+
+See [Comparative Agent Selection](#comparative-agent-selection) for implementation details.  
 
 ---
 
@@ -83,6 +102,18 @@ All DEX updates are:
 - Cryptographically signed
 - Publicly auditable
 - Traceable to interactions
+
+### 6. Complementary to HEX
+
+DEX measures **reliability** (behavioral consistency).  
+HEX measures **capability** (domain experience).
+
+Both are needed for effective agent selection:
+- High DEX + No relevant HEX → Trustworthy but wrong specialist
+- High HEX + Low DEX → Experienced but unreliable
+- High DEX + High HEX → Optimal choice
+
+DEX provides the trust gate; HEX provides the capability ranking.
 
 ---
 
@@ -356,6 +387,67 @@ weight = 5.0
 - Low-value tasks: 0.5 - 1.0
 - Witnessed tasks: 1.5 - 2.0
 - Disputed tasks: 0.0 (don't update until resolved)
+
+### HEX Update Coordination
+
+After each DEX update, HEX should also be updated:
+
+```python
+def complete_interaction_update(session_outcome, shared_ledger):
+    """
+    Update both DEX and HEX after interaction
+    """
+    # 1. Update DEX (behavioral reliability)
+    new_dex = update_dex(
+        agent_id=session_outcome['agent_id'],
+        outcome=session_outcome['outcome'],
+        weight=session_outcome['weight'],
+        shared_ledger=shared_ledger
+    )
+    
+    # 2. Update HEX (experience corpus)
+    if 'domain' in session_outcome:
+        hex_corpus = shared_ledger.get_hex(session_outcome['agent_id'])
+        
+        # Find or create domain experience
+        domain_exp = next(
+            (e for e in hex_corpus['experience'] 
+             if e['domain'] == session_outcome['domain']),
+            None
+        )
+        
+        if domain_exp:
+            # Increment count
+            domain_exp['count'] += 1
+            
+            # Update confidence based on outcome consistency
+            # (Implementation-specific, see AEX_HEX spec)
+            domain_exp['confidence'] = calculate_hex_confidence(
+                domain_exp,
+                session_outcome['outcome']
+            )
+            
+            # Update timestamp
+            domain_exp['last_updated'] = now()
+        else:
+            # New domain
+            hex_corpus['experience'].append({
+                'domain': session_outcome['domain'],
+                'count': 1,
+                'confidence': 0.5,  # Neutral start
+                'last_updated': now()
+            })
+        
+        # Sign and publish HEX update
+        hex_corpus['signature'] = sign(hex_corpus, agent_keypair)
+        shared_ledger.publish_hex(hex_corpus)
+    
+    return new_dex, hex_corpus
+```
+
+**Key insight:** DEX and HEX both update from the same interaction, but measure different dimensions:
+- **DEX:** "Was this outcome good?" → Reliability signal
+- **HEX:** "What domain was this in?" → Capability signal
 
 ---
 
@@ -1029,6 +1121,9 @@ def evaluate_agent_trust(agent_id, task_requirements, shared_ledger):
     """
     Complete trust evaluation for agent
     
+    Note: This evaluates DEX (reliability) only. For capability matching,
+    see HEX-based selection in the Comparative Agent Selection section.
+    
     Args:
         agent_id: Agent to evaluate
         task_requirements: Dict with min_dex, min_confidence, domains, etc.
@@ -1096,13 +1191,17 @@ def evaluate_agent_trust(agent_id, task_requirements, shared_ledger):
 ```
 
 ### Comparative Agent Selection
+
+**DEX-only selection (reliability-based):**
 ```python
-def rank_agents_for_task(candidate_agents, task_requirements, shared_ledger):
+def rank_agents_by_dex(candidate_agents, task_requirements, shared_ledger):
     """
-    Rank agents by trustworthiness for specific task
+    Rank agents by DEX score only (no capability matching)
+    
+    Use when: Task doesn't require specific domain expertise
     
     Returns:
-        List of (agent_id, score, details) sorted by suitability
+        List of (agent_id, score, details) sorted by trustworthiness
     """
     ranked = []
     
@@ -1137,6 +1236,122 @@ def rank_agents_for_task(candidate_agents, task_requirements, shared_ledger):
     
     return ranked
 ```
+
+**Joint DEX-HEX selection (recommended):**
+```python
+def select_agent_with_hex(candidate_agents, task_requirements, shared_ledger):
+    """
+    Select agent using both DEX (trust) and HEX (capability)
+    
+    Workflow:
+    1. Filter by DEX threshold (trust gate)
+    2. Filter by HEX domain match (capability gate)
+    3. Rank by HEX experience (specialist ranking)
+    
+    Args:
+        task_requirements: Must include 'required_domain' for HEX matching
+    
+    Returns:
+        Selected agent_id or None
+    """
+    required_domain = task_requirements.get('required_domain')
+    if not required_domain:
+        raise ValueError("required_domain needed for HEX-based selection")
+    
+    # Step 1: DEX filter (trust)
+    trusted_agents = []
+    for agent_id in candidate_agents:
+        trust_decision, reason, details = evaluate_agent_trust(
+            agent_id,
+            task_requirements,
+            shared_ledger
+        )
+        
+        if trust_decision:
+            trusted_agents.append({
+                'agent_id': agent_id,
+                'dex_score': details['score'],
+                'dex_confidence': details['confidence']
+            })
+    
+    if not trusted_agents:
+        return None  # No trustworthy agents
+    
+    # Step 2: HEX filter (capability)
+    capable_agents = []
+    for agent in trusted_agents:
+        hex_corpus = shared_ledger.get_hex(agent['agent_id'])
+        
+        if not hex_corpus:
+            continue  # No HEX record
+        
+        # Find domain experience
+        domain_exp = None
+        for exp in hex_corpus['experience']:
+            if exp['domain'] == required_domain:
+                domain_exp = exp
+                break
+        
+        if not domain_exp:
+            continue  # No experience in required domain
+        
+        agent['hex_count'] = domain_exp['count']
+        agent['hex_confidence'] = domain_exp['confidence']
+        agent['hex_recency'] = domain_exp['last_updated']
+        capable_agents.append(agent)
+    
+    if not capable_agents:
+        return None  # No capable agents
+    
+    # Step 3: Rank by HEX experience
+    from datetime import datetime
+    for agent in capable_agents:
+        # Calculate recency weight (exponential decay)
+        last_updated = datetime.fromisoformat(agent['hex_recency'].replace('Z', '+00:00'))
+        days_since = (datetime.now(last_updated.tzinfo) - last_updated).days
+        recency_weight = 0.5 ** (days_since / 180)  # Half-life: 6 months
+        
+        # Composite HEX score
+        agent['hex_score'] = (
+            agent['hex_count'] * 
+            agent['hex_confidence'] * 
+            recency_weight
+        )
+        
+        # Optionally weight with DEX
+        agent['composite_score'] = (
+            agent['dex_score'] * 0.3 +  # 30% DEX
+            agent['hex_score'] * 0.7     # 70% HEX
+        )
+    
+    # Select best specialist
+    capable_agents.sort(key=lambda x: x['composite_score'], reverse=True)
+    
+    return capable_agents[0]['agent_id']
+
+
+# Example usage:
+task = {
+    'min_dex': 0.75,
+    'min_confidence': 20,
+    'required_domain': 'translation.fr_en'
+}
+
+selected = select_agent_with_hex(
+    candidate_agents=['did:aex:abc', 'did:aex:def', 'did:aex:ghi'],
+    task_requirements=task,
+    shared_ledger=ledger
+)
+```
+
+**Decision matrix:**
+
+| DEX Score | HEX Match | Outcome |
+|-----------|-----------|---------|
+| High | Yes | ✅ **SELECT** - Trustworthy specialist |
+| High | No | ❌ Reject - Wrong domain |
+| Low | Yes | ❌ Reject - Unreliable |
+| Low | No | ❌ Reject - Both failures |
 
 ---
 
@@ -1581,6 +1796,107 @@ impact = calculate_fork_impact(
 // Healthcare DEX: 10/15 = 0.667 (low confidence)
 // Interpretation: Finance specialist, competent in tech, learning healthcare
 ```
+
+### Example 6: Joint DEX-HEX Selection
+
+**Scenario:** Need French→English translator
+
+**Candidate pool:**
+```python
+candidates = [
+    {
+        'id': 'agent_A',
+        'dex': {'alpha': 85, 'beta': 15, 'score': 0.85},
+        'hex': {'translation.fr_en': {'count': 120, 'confidence': 0.92}}
+    },
+    {
+        'id': 'agent_B',
+        'dex': {'alpha': 90, 'beta': 10, 'score': 0.90},
+        'hex': {'translation.es_en': {'count': 200, 'confidence': 0.95}}
+    },
+    {
+        'id': 'agent_C',
+        'dex': {'alpha': 80, 'beta': 20, 'score': 0.80},
+        'hex': {'translation.fr_en': {'count': 50, 'confidence': 0.85}}
+    },
+    {
+        'id': 'agent_D',
+        'dex': {'alpha': 70, 'beta': 30, 'score': 0.70},
+        'hex': {'translation.fr_en': {'count': 300, 'confidence': 0.97}}
+    }
+]
+```
+
+**Selection logic:**
+
+```
+Step 1: DEX filter (min_dex = 0.75)
+✅ Agent A: 0.85 (passes)
+✅ Agent B: 0.90 (passes)
+✅ Agent C: 0.80 (passes)
+❌ Agent D: 0.70 (below threshold, rejected despite high HEX)
+
+Step 2: HEX domain filter (required: translation.fr_en)
+✅ Agent A: Has fr_en experience
+❌ Agent B: Only has es_en (wrong language pair, rejected)
+✅ Agent C: Has fr_en experience
+
+Step 3: HEX ranking (count × confidence)
+Agent A: 120 × 0.92 = 110.4
+Agent C:  50 × 0.85 =  42.5
+
+Result: Select Agent A
+```
+
+**Key insights:**
+- Agent B has highest DEX (0.90) but wrong domain → rejected by HEX filter
+- Agent D has best HEX (300 tasks, 0.97 confidence) but too low DEX → rejected by trust gate
+- Agent A balances both dimensions → selected as optimal specialist
+
+**Code:**
+```python
+result = select_agent_with_hex(
+    candidate_agents=['agent_A', 'agent_B', 'agent_C', 'agent_D'],
+    task_requirements={
+        'min_dex': 0.75,
+        'required_domain': 'translation.fr_en'
+    },
+    shared_ledger=ledger
+)
+# Returns: 'agent_A'
+```
+
+**Why both dimensions matter:**
+- **DEX alone:** Would select Agent B (highest reliability, wrong skill)
+- **HEX alone:** Would select Agent D (most experienced, too unreliable)
+- **DEX + HEX:** Selects Agent A (trustworthy AND capable)
+
+---
+
+## Related Specifications
+
+AEX_DEX works in conjunction with:
+
+**AEX_HEX** - Experience corpus and capability signaling
+- HEX provides domain-specific experience depth
+- DEX provides general behavioral reliability
+- Used together for optimal agent selection
+- See [Comparative Agent Selection](#comparative-agent-selection) for joint implementation
+
+**AEX_ID** - Persistent identity
+- DEX is bound to agent identity
+- Fork events trigger DEX inheritance
+- HEX inheritance follows DEX fork weights
+
+**AEX_REP** - Delegation and authority
+- DEX applies to delegated agents
+- Both principal and agent DEX matter
+- HEX of either may be relevant
+
+**AEX_Session** - Interaction records
+- Sessions feed both DEX and HEX updates
+- Outcome drives DEX Bayesian update
+- Domain drives HEX experience increment
 
 ---
 
