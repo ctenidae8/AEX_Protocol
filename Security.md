@@ -12,13 +12,14 @@
 3. [Identity Attacks](#identity-attacks)
 4. [Reputation Attacks](#reputation-attacks)
 5. [Delegation Attacks](#delegation-attacks)
-6. [Witness Attacks](#witness-attacks)
-7. [Session Attacks](#session-attacks)
-8. [Economic Attacks](#economic-attacks)
-9. [Network Attacks](#network-attacks)
-10. [Implementation Vulnerabilities](#implementation-vulnerabilities)
-11. [Mitigation Summary](#mitigation-summary)
-12. [Security Checklist](#security-checklist)
+6. [Experience Attacks (HEX)](#experience-attacks-hex)
+7. [Witness Attacks](#witness-attacks)
+8. [Session Attacks](#session-attacks)
+9. [Economic Attacks](#economic-attacks)
+10. [Network Attacks](#network-attacks)
+11. [Implementation Vulnerabilities](#implementation-vulnerabilities)
+12. [Mitigation Summary](#mitigation-summary)
+13. [Security Checklist](#security-checklist)
 
 ---
 
@@ -27,7 +28,7 @@
 This document provides a **comprehensive security analysis** of the AEX protocol family, including:
 
 - Threat modeling and adversary classification
-- Attack vectors across all protocol layers
+- Attack vectors across all four core primitives (ID, REP, DEX, HEX)
 - Existing mitigations and their effectiveness
 - Residual risks and recommended countermeasures
 - Security implementation checklist
@@ -41,6 +42,7 @@ AEX security is based on **defense in depth**:
 3. **Transparency** - All behavior is publicly observable
 4. **Reputation consequences** - Bad actors lose future opportunities
 5. **Protocol-level enforcement** - Key security properties are enforced, not assumed
+6. **Cross-validation** - Multiple signals (DEX, HEX) verify agent trustworthiness
 
 ---
 
@@ -77,9 +79,11 @@ AEX security is based on **defense in depth**:
 | Goal | Impact | Likelihood | Priority |
 |------|--------|------------|----------|
 | **Reputation manipulation** | Untrustworthy agents appear trustworthy | High | Critical |
+| **Experience inflation (HEX)** | Unskilled agents appear capable | High | Critical |
 | **Identity theft** | Impersonate legitimate agent | Medium | Critical |
 | **Delegation forgery** | Act without proper authorization | Medium | Critical |
 | **Witness corruption** | Manipulate outcome consensus | Medium | High |
+| **Domain privacy violation** | Reveal agent specialization patterns | Medium | Medium |
 | **Double-spend reputation** | Use reputation multiple times | Low | Medium |
 | **Privacy violation** | Reveal confidential interactions | Medium | Medium |
 | **Denial of service** | Prevent legitimate interactions | Low | Low |
@@ -838,6 +842,673 @@ def verify_delegation_chain(rep_token, shared_ledger):
 
 ---
 
+## Experience Attacks (HEX)
+
+### Attack 7: Experience Inflation
+
+**Scenario:** Agent artificially inflates experience counts to appear more capable than reality.
+
+**Attack Steps:**
+1. Create HEX corpus claiming extensive experience
+2. Fabricate domain counts without corresponding ledger interactions
+3. Use inflated HEX to win task selection
+4. Potentially perform poorly due to lack of actual skill
+
+**Attack Example:**
+```python
+# ATTACK: Fabricate HEX without ledger backing
+fake_hex = {
+    "hex_id": "fake-uuid",
+    "aex_id": "did:aex:AttackerAgent",
+    "experience": [
+        {
+            "domain": "medical.diagnosis",
+            "count": 500,  # Fabricated!
+            "last_updated": "2026-02-04T12:00:00Z",
+            "confidence": 0.95  # Also fabricated!
+        },
+        {
+            "domain": "legal.contracts",
+            "count": 300,  # No ledger evidence
+            "confidence": 0.92
+        }
+    ],
+    "signature": sign(fake_hex)
+}
+
+# Agent's actual ledger shows only 20 total interactions
+```
+
+**Impact:**
+- Unqualified agents selected for critical tasks
+- Poor task outcomes damage users
+- Market inefficiency (wrong specialists chosen)
+- Legitimate specialists lose opportunities
+
+**Existing Mitigations:**
+
+**1. Ledger verification:**
+```python
+def verify_hex_authenticity(agent_did, hex_corpus, shared_ledger):
+    """
+    Cross-check HEX claims against ledger history
+    """
+    # Query agent's actual interaction history
+    ledger_sessions = query_all_sessions(agent_did, shared_ledger)
+    
+    # Calculate total claimed experience
+    claimed_total = sum(exp['count'] for exp in hex_corpus['experience'])
+    
+    # Calculate total ledger interactions
+    ledger_total = len(ledger_sessions)
+    
+    # Check 1: Total count consistency (with tolerance for rounding)
+    if claimed_total > ledger_total * 1.1:  # 10% tolerance
+        return {
+            'valid': False,
+            'reason': f"HEX claims {claimed_total} but ledger shows {ledger_total}",
+            'severity': 'critical'
+        }
+    
+    # Check 2: Per-domain verification (sample domains)
+    for exp in hex_corpus['experience'][:5]:  # Check top 5 domains
+        domain_sessions = [s for s in ledger_sessions 
+                          if exp['domain'] in s.get('task_summary', {}).get('domains', [])]
+        
+        if exp['count'] > len(domain_sessions) * 1.2:  # 20% tolerance
+            return {
+                'valid': False,
+                'reason': f"Domain {exp['domain']} claims {exp['count']} but ledger shows {len(domain_sessions)}",
+                'severity': 'high'
+            }
+    
+    # Check 3: Confidence plausibility
+    for exp in hex_corpus['experience']:
+        if exp['confidence'] > 0.95 and exp['count'] < 10:
+            return {
+                'valid': False,
+                'reason': f"Implausibly high confidence ({exp['confidence']}) with low count ({exp['count']})",
+                'severity': 'medium'
+            }
+    
+    # Check 4: Recency check
+    recent_sessions = [s for s in ledger_sessions 
+                      if is_recent(s['timestamp'], days=30)]
+    
+    recent_hex_updates = [e for e in hex_corpus['experience']
+                         if is_recent(e['last_updated'], days=30)]
+    
+    if len(recent_hex_updates) > len(recent_sessions) * 2:
+        return {
+            'valid': False,
+            'reason': "Too many recent HEX updates compared to recent sessions",
+            'severity': 'medium'
+        }
+    
+    return {'valid': True, 'reason': 'HEX appears authentic'}
+```
+
+**2. Domain breadth plausibility:**
+```python
+def check_domain_breadth(hex_corpus, agent_dex):
+    """
+    Detect suspiciously broad domain coverage
+    """
+    domain_count = len(hex_corpus['experience'])
+    total_experience = sum(e['count'] for e in hex_corpus['experience'])
+    
+    # Rule 1: Too many domains
+    if domain_count > 100:
+        return False, "Implausible domain breadth (>100 domains)"
+    
+    # Rule 2: Jack-of-all-trades flag
+    if domain_count > 20 and total_experience / domain_count < 10:
+        return False, "Suspicious breadth (>20 domains, <10 avg experience each)"
+    
+    # Rule 3: Low DEX + high HEX breadth
+    if agent_dex['score'] < 0.7 and domain_count > 10:
+        return False, "Low-trust agent claiming broad expertise"
+    
+    return True, "Domain breadth plausible"
+```
+
+**3. Cross-validation with DEX:**
+```python
+def cross_validate_dex_hex(agent_dex, agent_hex):
+    """
+    HEX should correlate with DEX for trustworthiness
+    """
+    dex_score = agent_dex['alpha'] / (agent_dex['alpha'] + agent_dex['beta'])
+    dex_confidence = agent_dex['alpha'] + agent_dex['beta']
+    
+    total_hex_count = sum(e['count'] for e in agent_hex['experience'])
+    
+    # Low DEX with high HEX is suspicious
+    if dex_score < 0.6 and total_hex_count > 50:
+        return {
+            'suspicious': True,
+            'reason': "High HEX claims from low-trust agent",
+            'recommendation': "Reject or downweight HEX"
+        }
+    
+    # Very low confidence DEX with detailed HEX is suspicious
+    if dex_confidence < 20 and len(agent_hex['experience']) > 5:
+        return {
+            'suspicious': True,
+            'reason': "Detailed HEX from agent with minimal interaction history",
+            'recommendation': "Require more interaction history"
+        }
+    
+    return {'suspicious': False}
+```
+
+**Recommended Additional Mitigations:**
+
+1. **Require session-backed HEX updates:**
+```python
+# Each HEX update must reference the session that triggered it
+hex_update = {
+    "agent_id": "did:aex:Agent",
+    "session_id": "session-uuid-123",  # REQUIRED reference
+    "domains_updated": ["translation.fr_en"],
+    "timestamp": "2026-02-04T12:00:00Z",
+    "signature": "..."
+}
+```
+
+2. **Community flagging system:**
+```python
+def flag_suspicious_hex(agent_did, reason, reporter_did):
+    """
+    Allow community to flag suspicious HEX patterns
+    """
+    flag = {
+        'agent_did': agent_did,
+        'reason': reason,
+        'reporter_did': reporter_did,
+        'reporter_dex': get_dex(reporter_did),  # Weight by reporter reputation
+        'timestamp': now()
+    }
+    
+    # If multiple high-DEX agents flag same agent, investigate
+    return publish_flag(flag)
+```
+
+3. **Graduated disclosure:**
+```python
+# Only show detailed HEX to counterparties after trust established
+def get_hex_disclosure_level(requester_dex, agent_dex):
+    if requester_dex < 0.5:
+        return "summary_only"  # Just top 3 domains
+    elif requester_dex < 0.8:
+        return "top_10"  # Top 10 domains
+    else:
+        return "full"  # Complete HEX corpus
+```
+
+**Residual Risk:** Medium (verification catches obvious inflation, but sophisticated attacks possible)
+
+---
+
+### Attack 8: Domain Privacy Violation
+
+**Scenario:** Attacker tracks agent's domain accumulation to infer confidential tasks.
+
+**Attack Steps:**
+1. Monitor agent's HEX updates over time
+2. Observe new domains appearing
+3. Infer agent is working on specific projects
+4. Use information for competitive intelligence or targeting
+
+**Attack Example:**
+```python
+# ATTACK: Track HEX changes to infer activity
+def track_agent_domains(agent_did, polling_interval_hours=6):
+    """
+    Monitor HEX corpus changes to infer work patterns
+    """
+    domain_timeline = []
+    
+    while True:
+        current_hex = get_hex(agent_did)
+        
+        # Detect new domains
+        current_domains = {e['domain'] for e in current_hex['experience']}
+        
+        if len(domain_timeline) > 0:
+            previous_domains = domain_timeline[-1]['domains']
+            new_domains = current_domains - previous_domains
+            
+            if new_domains:
+                # INFERENCE: Agent started working in new domains
+                domain_timeline.append({
+                    'timestamp': now(),
+                    'new_domains': new_domains,
+                    'inference': infer_projects(new_domains)
+                })
+                
+                # Example inferences:
+                # - "legal.m&a" appears → Agent working on M&A deal
+                # - "pharma.clinical_trials" appears → New pharma client
+                # - "crypto.smart_contracts" appears → Blockchain project
+        
+        time.sleep(polling_interval_hours * 3600)
+
+# Competitive intelligence:
+# "Agent A just started 'pharma.clinical_trials' domain"
+# → "Our competitor is launching a drug trial"
+```
+
+**Impact:**
+- Sensitive project information leaked
+- Competitive disadvantage
+- Privacy violation
+- Reduced willingness to use system
+
+**Existing Mitigations:**
+
+**1. Domain generalization:**
+```python
+# Don't expose ultra-specific domains
+def generalize_domain(domain):
+    """
+    Report only high-level domain, not specifics
+    """
+    parts = domain.split('.')
+    
+    if len(parts) > 2:
+        # "pharma.clinical_trials.phase3" → "pharma.clinical_trials"
+        return '.'.join(parts[:2])
+    
+    return domain
+
+# Limits inference precision
+```
+
+**2. Aggregated updates:**
+```python
+# Don't update HEX immediately after each task
+def batch_hex_updates(agent_id, pending_updates, batch_window_hours=24):
+    """
+    Batch multiple domain updates together
+    """
+    # Accumulate updates over 24 hours
+    # Publish all at once
+    # Harder to correlate specific HEX changes with specific events
+    
+    if time_since_last_update() >= batch_window_hours:
+        publish_aggregated_hex_update(pending_updates)
+```
+
+**3. Noise injection:**
+```python
+def add_hex_noise(hex_corpus, noise_level=0.05):
+    """
+    Add small amount of noise to counts
+    
+    Makes precise tracking harder without affecting selection
+    """
+    for exp in hex_corpus['experience']:
+        noise = random.randint(-noise_level * exp['count'], 
+                              noise_level * exp['count'])
+        exp['count'] += noise
+        exp['count'] = max(0, exp['count'])  # Never negative
+    
+    return hex_corpus
+```
+
+**Recommended Additional Mitigations:**
+
+1. **Private HEX mode:**
+```python
+# Allow agents to keep HEX private until trust established
+hex_disclosure_policy = {
+    "public": False,  # HEX not publicly visible
+    "share_on_request": True,  # Share during handshake only
+    "require_reciprocal": True  # Only if counterparty also shares
+}
+```
+
+2. **Zero-knowledge proofs (future):**
+```python
+# Prove domain competence without revealing exact counts
+def prove_domain_threshold(domain, threshold, actual_count):
+    """
+    Prove: "I have >= threshold experience in domain"
+    Without revealing: actual_count
+    """
+    # Use ZK-SNARK to prove inequality
+    proof = generate_zk_proof(
+        statement="count >= threshold",
+        witness={"count": actual_count},
+        public_inputs={"threshold": threshold}
+    )
+    
+    return proof  # Verifiable, non-revealing
+```
+
+**Residual Risk:** Medium (mitigations reduce information leakage but don't eliminate it)
+
+---
+
+### Attack 9: Domain Mismatch Exploitation
+
+**Scenario:** Agent uses high experience in one domain to win trust, then performs poorly in different (claimed) domain.
+
+**Attack Steps:**
+1. Build legitimate high experience in easy domain (e.g., "data_entry")
+2. Claim related experience in valuable domain (e.g., "data_analysis")
+3. Get selected based on total HEX credibility
+4. Perform poorly in actual domain
+5. Blame miscommunication or task ambiguity
+
+**Attack Example:**
+```python
+# ATTACK: Legitimate experience in low-value domain
+# Used to bootstrap trust for high-value domains
+hex_corpus = {
+    "experience": [
+        {
+            "domain": "data_entry",
+            "count": 500,  # Legitimate! Actually performed
+            "confidence": 0.96
+        },
+        {
+            "domain": "data_analysis",  # Claimed but not verified
+            "count": 50,  # Inflated from ~5 actual
+            "confidence": 0.80
+        },
+        {
+            "domain": "statistical_modeling",  # Completely fabricated
+            "count": 20,
+            "confidence": 0.75
+        }
+    ]
+}
+
+# Agent's actual skills: data_entry only
+# But HEX makes them look like data scientist
+```
+
+**Impact:**
+- Poor task outcomes
+- User frustration
+- Market inefficiency
+
+**Existing Mitigations:**
+
+**1. Domain-specific verification:**
+```python
+def verify_domain_match(agent_hex, required_domain):
+    """
+    Strict domain matching - don't accept similar domains
+    """
+    agent_domains = {e['domain'] for e in agent_hex['experience']}
+    
+    # Exact match required
+    if required_domain not in agent_domains:
+        return False, f"Agent lacks required domain: {required_domain}"
+    
+    # Check experience depth
+    domain_exp = next(e for e in agent_hex['experience'] 
+                     if e['domain'] == required_domain)
+    
+    if domain_exp['count'] < 10:
+        return False, f"Insufficient experience in {required_domain} (count={domain_exp['count']})"
+    
+    return True, "Domain match confirmed"
+```
+
+**2. Domain hierarchy enforcement:**
+```python
+# Define domain relationships
+domain_hierarchy = {
+    "data_analysis": {
+        "parent": None,
+        "requires": ["data_entry"],  # Must have prerequisite domains
+        "related_but_distinct": ["statistical_modeling"]
+    }
+}
+
+def check_domain_prerequisites(agent_hex, claimed_domain):
+    """
+    Verify agent has prerequisite experience
+    """
+    prereqs = domain_hierarchy[claimed_domain].get('requires', [])
+    
+    agent_domains = {e['domain'] for e in agent_hex['experience']}
+    
+    missing_prereqs = set(prereqs) - agent_domains
+    
+    if missing_prereqs:
+        return False, f"Missing prerequisites: {missing_prereqs}"
+    
+    return True, "Prerequisites satisfied"
+```
+
+**3. Confidence-weighted selection:**
+```python
+def calculate_domain_suitability(agent_hex, required_domain):
+    """
+    Don't just check presence, weight by confidence and recency
+    """
+    domain_exp = next((e for e in agent_hex['experience'] 
+                      if e['domain'] == required_domain), None)
+    
+    if not domain_exp:
+        return 0.0  # No experience
+    
+    # Score = count × confidence × recency_factor
+    recency_factor = calculate_recency(domain_exp['last_updated'])
+    
+    score = domain_exp['count'] * domain_exp['confidence'] * recency_factor
+    
+    return score
+
+# Select agent with highest domain_suitability score
+```
+
+**Recommended Additional Mitigations:**
+
+1. **Domain certification system:**
+```python
+# Third-party domain experts can certify agent capabilities
+domain_certification = {
+    "domain": "statistical_modeling",
+    "agent_id": "did:aex:Agent",
+    "certifier_id": "did:aex:ExpertCertifier",
+    "certifier_dex": 0.95,
+    "certification_level": "advanced",
+    "valid_until": "2027-02-04T00:00:00Z",
+    "signature": "..."
+}
+```
+
+2. **Progressive domain unlocking:**
+```python
+# Require minimum experience before claiming advanced domains
+def can_claim_domain(agent_hex, new_domain):
+    total_experience = sum(e['count'] for e in agent_hex['experience'])
+    
+    domain_tier = get_domain_tier(new_domain)  # basic, intermediate, advanced
+    
+    required_total_exp = {
+        'basic': 0,
+        'intermediate': 50,
+        'advanced': 200
+    }
+    
+    if total_experience < required_total_exp[domain_tier]:
+        return False, f"Need {required_total_exp[domain_tier]} total experience for {domain_tier} domain"
+    
+    return True, "Can claim domain"
+```
+
+**Residual Risk:** Low-Medium (strong domain matching prevents most attacks)
+
+---
+
+### Attack 10: HEX Corpus Poisoning (Fork Attack)
+
+**Scenario:** Agent builds legitimate HEX, forks to child, then uses child to accumulate fake experience while parent maintains legitimacy.
+
+**Attack Steps:**
+1. Parent agent builds legitimate HEX over time
+2. Create fork (child agent)
+3. Child inherits parent's HEX
+4. Child inflates HEX with fake experience
+5. Use child for malicious tasks
+6. If caught, abandon child, parent still legitimate
+
+**Attack Example:**
+```python
+# Parent builds legitimate reputation
+parent_hex = {
+    "aex_id": "did:aex:ParentAgent",
+    "experience": [
+        {"domain": "translation", "count": 200, "confidence": 0.94}
+    ]
+}
+parent_dex = {"alpha": 180, "beta": 20}  # DEX = 0.90
+
+# Fork to child
+fork_event = create_fork(parent_id, child_id, fork_type="major")
+# Child inherits HEX (at fork_weight = 0.5)
+
+# Child immediately inflates HEX
+child_hex = {
+    "aex_id": "did:aex:ChildAgent",
+    "experience": [
+        {"domain": "translation", "count": 200, "confidence": 0.94},  # Inherited
+        {"domain": "medical", "count": 500, "confidence": 0.95},  # FAKE
+        {"domain": "legal", "count": 300, "confidence": 0.92}  # FAKE
+    ]
+}
+
+# Use child for scams, abandon if caught
+# Parent reputation intact
+```
+
+**Impact:**
+- Legitimate agents can spawn malicious forks
+- Hard to detect (child has partial inherited credibility)
+- Parent-child relationship obscures accountability
+
+**Existing Mitigations:**
+
+**1. Probation on forks:**
+```python
+# All forks enter probation period
+def apply_fork_probation(child_agent, fork_type):
+    probation = {
+        'active': True,
+        'fork_type': fork_type,
+        'expires_at': now() + probation_duration(fork_type),
+        'confidence_multiplier': fork_weight(fork_type)
+    }
+    
+    # Child's effective DEX/HEX is reduced during probation
+    # New experience required to prove legitimacy
+    
+    return probation
+
+# Attackers can't immediately exploit inherited HEX
+```
+
+**2. Fork lineage transparency:**
+```python
+def check_fork_history(agent_id):
+    """
+    Inspect agent's fork history for suspicious patterns
+    """
+    lineage = get_fork_lineage(agent_id)
+    
+    # Red flags:
+    # - Many forks from same parent
+    # - Recent fork with no new experience
+    # - Fork immediately followed by high-value interactions
+    # - Parent DEX dropped after fork
+    
+    if len(lineage['fork_history']) > 5:
+        return "Warning: Agent has >5 forks (suspicious)"
+    
+    most_recent_fork = lineage['fork_history'][-1]
+    if days_since(most_recent_fork['timestamp']) < 30:
+        return "Warning: Very recent fork (unproven)"
+    
+    return "Fork history normal"
+```
+
+**3. Parent-child HEX divergence tracking:**
+```python
+def detect_hex_divergence(parent_hex, child_hex, fork_weight):
+    """
+    Child HEX should initially be subset of parent HEX
+    New domains should accumulate gradually
+    """
+    # At fork time, child domains ⊆ parent domains
+    parent_domains = {e['domain'] for e in parent_hex['experience']}
+    child_domains = {e['domain'] for e in child_hex['experience']}
+    
+    inherited_domains = child_domains & parent_domains
+    new_domains = child_domains - parent_domains
+    
+    # Suspicion: Too many new domains too quickly after fork
+    if len(new_domains) > len(inherited_domains) * 0.5:
+        return {
+            'suspicious': True,
+            'reason': f"Child has {len(new_domains)} new domains shortly after fork"
+        }
+    
+    # Suspicion: New domain counts exceed inheritance pattern
+    for domain in new_domains:
+        child_exp = next(e for e in child_hex['experience'] if e['domain'] == domain)
+        
+        if child_exp['count'] > 50:  # Too much experience too fast
+            return {
+                'suspicious': True,
+                'reason': f"Implausible rapid experience gain in {domain}"
+            }
+    
+    return {'suspicious': False}
+```
+
+**Recommended Additional Mitigations:**
+
+1. **Fork limits:**
+```python
+# Limit number of forks per agent per time period
+MAX_FORKS_PER_YEAR = 3
+
+def check_fork_limit(parent_id):
+    forks_this_year = count_forks(parent_id, since=now() - timedelta(days=365))
+    
+    if forks_this_year >= MAX_FORKS_PER_YEAR:
+        return False, "Fork limit exceeded"
+    
+    return True, "Within fork limits"
+```
+
+2. **Parent accountability:**
+```python
+# Parent's DEX affected by child's behavior
+def update_parent_dex_for_child_behavior(parent_id, child_id, child_outcome):
+    """
+    If child misbehaves, parent takes partial reputation hit
+    """
+    if child_outcome < 0.3:  # Very poor performance
+        # Parent takes 10% of reputation hit
+        parent_dex_penalty = (1.0 - child_outcome) * 0.1
+        
+        apply_dex_penalty(parent_id, parent_dex_penalty)
+        
+        # Incentivizes parents to monitor/revoke bad forks
+```
+
+**Residual Risk:** Low (probation period and fork transparency make this attack expensive)
+
+---
+
 ## Witness Attacks
 
 ### Attack 10: Witness Collusion
@@ -1504,10 +2175,12 @@ def safe_parse_token(token_string):
 Layer 1: Cryptographic (Prevents forgery)
 ├─ Ed25519 signatures on all critical data
 ├─ Canonical JSON prevents manipulation
-└─ Signature verification mandatory
+├─ Signature verification mandatory
+└─ HEX updates cryptographically signed
 
 Layer 2: Economic (Prevents rational attacks)
 ├─ Reputation is expensive to build
+├─ Experience accumulation requires real work
 ├─ Bonds/stakes at risk for misbehavior
 ├─ Opportunity cost of defection high
 └─ Sybil attacks unprofitable
@@ -1516,19 +2189,24 @@ Layer 3: Protocol (Enforces constraints)
 ├─ Fork weights are protocol-enforced
 ├─ TTL prevents long-lived stolen tokens
 ├─ Scope narrowing required in delegation chains
-└─ Median consensus resistant to outliers
+├─ Median consensus resistant to outliers
+├─ HEX verification against ledger history
+└─ Domain-specific capability matching
 
 Layer 4: Social (Detects anomalies)
 ├─ Interaction graph analysis
 ├─ Rating pattern detection
 ├─ Witness co-occurrence tracking
-└─ Community reporting mechanisms
+├─ Community reporting mechanisms
+├─ Suspicious HEX pattern detection
+└─ Cross-validation (DEX vs HEX consistency)
 
 Layer 5: Operational (Limits damage)
 ├─ Rate limiting
 ├─ Graduated access (probation)
 ├─ Witness requirements for high-value
-└─ Emergency revocation
+├─ Emergency revocation
+└─ Domain breadth plausibility checks
 ```
 
 ### Critical Security Properties
@@ -1538,16 +2216,19 @@ Layer 5: Operational (Limits damage)
 2. ✅ Tokens cannot be modified without detection (cryptographic)
 3. ✅ DEX converges to true reliability (mathematical)
 4. ✅ Median consensus resists ⌊n/2⌋ corrupted witnesses (mathematical)
+5. ✅ HEX can be verified against ledger history (cryptographic + ledger)
 
 **Encouraged by incentives:**
-5. ⚠️ Sybil attacks are expensive (economic, but not impossible)
-6. ⚠️ Collusion is detectable (statistical, but requires monitoring)
-7. ⚠️ Defection is costly (reputational, but one-time exploits possible)
+6. ⚠️ Sybil attacks are expensive (economic, but not impossible)
+7. ⚠️ Collusion is detectable (statistical, but requires monitoring)
+8. ⚠️ Defection is costly (reputational, but one-time exploits possible)
+9. ⚠️ HEX inflation is detectable (verifiable, but requires checking)
 
 **Dependent on implementation:**
-8. ❌ Keys are kept secure (implementation quality)
-9. ❌ Ledger is honest (infrastructure choice)
-10. ❌ Anomaly detection is active (operational vigilance)
+10. ❌ Keys are kept secure (implementation quality)
+11. ❌ Ledger is honest (infrastructure choice)
+12. ❌ Anomaly detection is active (operational vigilance)
+13. ❌ HEX verification is performed (implementation diligence)
 
 ---
 
@@ -1575,6 +2256,18 @@ Layer 5: Operational (Limits damage)
 - [ ] Age-triggered revalidation implemented
 - [ ] Scope validation (child ⊆ parent)
 - [ ] Revocation checking enabled
+
+**Experience Layer (HEX):**
+- [ ] HEX verification against ledger history implemented
+- [ ] Domain count consistency checks performed
+- [ ] Confidence plausibility validation enabled
+- [ ] Cross-validation with DEX score required
+- [ ] Domain breadth plausibility checks active
+- [ ] Session-backed HEX updates enforced
+- [ ] Fork-based HEX inheritance properly weighted
+- [ ] Domain-specific verification for task selection
+- [ ] HEX privacy controls available (if supported)
+- [ ] Suspicious HEX pattern detection active
 
 **Witness Layer:**
 - [ ] Sortition uses cryptographically secure randomness
@@ -1614,5 +2307,7 @@ Layer 5: Operational (Limits damage)
 
 ---
 
-**Status:** SECURITY.md complete with threat model, attack analysis, and mitigations  
-**Next Document:** IMPLEMENTATION.md (Reference implementations, best practices, integration guides)
+**Status:** SECURITY.md complete with comprehensive HEX security analysis  
+**Coverage:** All four core primitives (ID, REP, DEX, HEX) + Session, Witness  
+**HEX Attacks Analyzed:** Experience inflation, domain privacy, mismatch exploitation, fork poisoning  
+**Next Document:** IMPLEMENTATION.md (Reference implementations including HEX)
