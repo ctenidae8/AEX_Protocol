@@ -1,7 +1,7 @@
 # AEX_REP v1.0
 ## Representation, Delegation, and Authority for Synthetic Agents
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -40,9 +40,23 @@ AEX_REP defines the representation and delegation substrate for synthetic agents
 
 ❌ An identity system (use AEX_ID for that)  
 ❌ A reputation system (use AEX_DEX for that)  
+❌ An experience corpus (use AEX_HEX for that)  
 ❌ A payment mechanism  
 ❌ A capability proof system  
 ❌ A general-purpose authorization framework (it's agent-specific)
+
+### Relationship to Other Primitives
+
+**REP works with:**
+- **AEX_ID:** REP tokens reference agent identity
+- **AEX_DEX:** Delegated agent's DEX is still evaluated
+- **AEX_HEX:** Delegated agent's HEX is still relevant for task matching
+
+**When evaluating a delegated agent:**
+1. Verify REP token (authorization)
+2. Check delegate's DEX (is the delegated agent reliable?)
+3. Check delegate's HEX (is the delegated agent capable?)
+4. Optionally check principal's credentials too
 
 ---
 
@@ -288,6 +302,73 @@ Issuers can add domain-specific limits:
   }
 }
 ```
+
+### HEX in Delegation Context
+
+**Question:** When an agent is delegated via REP, whose HEX matters?
+
+**Answer:** The **delegate's HEX** (the agent actually performing the work).
+
+**Rationale:**
+- HEX represents accumulated experience of the agent doing the work
+- Principal (human/issuer) typically doesn't have HEX
+- Delegate's capabilities determine task success
+
+**Example:**
+```json
+{
+  "issuer": "did:human:alice",           // Human has no HEX
+  "delegate": "did:aex:translator_bot",  // Bot has HEX in translation.fr_en
+  "scope": {
+    "actions": ["translate"],
+    "domains": ["documents"]
+  }
+}
+```
+
+**Selection logic:**
+```python
+def select_delegated_agent(rep_token, task):
+    """
+    Evaluate delegated agent for task
+    """
+    # 1. Verify REP token (authorization)
+    if not verify_rep_token(rep_token):
+        return False, "Invalid REP token"
+    
+    # 2. Check delegate's DEX (reliability)
+    delegate_dex = get_dex(rep_token['delegate'])
+    if delegate_dex['score'] < 0.75:
+        return False, "Delegate unreliable"
+    
+    # 3. Check delegate's HEX (capability)
+    delegate_hex = get_hex(rep_token['delegate'])
+    if not has_domain_experience(delegate_hex, task['required_domain']):
+        return False, "Delegate lacks experience"
+    
+    # 4. Optionally check principal's reputation/credentials
+    # (implementation-specific)
+    
+    return True, "Delegate authorized and capable"
+```
+
+**Key insight:** REP provides authorization, but the delegate's DEX and HEX still determine whether the agent is trustworthy and capable.
+
+### Optional: Principal's Credentials
+
+In some scenarios, the **principal's** credentials may also matter:
+
+**When principal credentials matter:**
+- Professional licensing (doctor delegating to medical AI)
+- Legal authority (lawyer delegating to legal research AI)
+- Financial credentials (trader delegating to trading bot)
+
+**When only delegate matters:**
+- General task automation (human delegating to assistant)
+- No domain-specific licensing required
+- Authority is purely about scope, not expertise
+
+**Implementation note:** This is non-normative. Applications decide whether to check principal credentials.
 
 ---
 
@@ -810,6 +891,100 @@ def verify_aex_rep_complete(rep_token, requesting_agent, task_proposal, shared_l
     # All checks passed
     return True, "Authorization verified", results
 ```
+
+### Verification with HEX Consideration
+
+When verifying a delegated agent for a specific task:
+
+```python
+def verify_delegated_agent_for_task(rep_token, task, shared_ledger):
+    """
+    Complete verification: REP + DEX + HEX
+    """
+    # Step 1: Verify REP token
+    rep_valid, rep_reason, rep_details = verify_aex_rep_complete(
+        rep_token,
+        {'aex_id': rep_token['delegate']},
+        task,
+        shared_ledger
+    )
+    if not rep_valid:
+        return False, f"REP invalid: {rep_reason}"
+    
+    # Step 2: Check scope matches task
+    if task['action'] not in rep_token['scope']['actions']:
+        return False, f"Action '{task['action']}' not in scope"
+    
+    if task['domain'] not in rep_token['scope']['domains']:
+        return False, f"Domain '{task['domain']}' not in scope"
+    
+    # Step 3: Verify delegate's DEX (trustworthiness)
+    delegate_dex = shared_ledger.get_dex(rep_token['delegate'])
+    if not delegate_dex:
+        return False, "Delegate has no DEX record"
+    
+    dex_score = delegate_dex['alpha'] / (delegate_dex['alpha'] + delegate_dex['beta'])
+    if dex_score < task.get('min_dex', 0.75):
+        return False, f"Delegate DEX {dex_score:.2f} below threshold"
+    
+    # Step 4: Verify delegate's HEX (capability)
+    if 'required_domain' in task:
+        delegate_hex = shared_ledger.get_hex(rep_token['delegate'])
+        
+        if not delegate_hex:
+            return False, "Delegate has no HEX record"
+        
+        domain_exp = next(
+            (e for e in delegate_hex['experience'] 
+             if e['domain'] == task['required_domain']),
+            None
+        )
+        
+        if not domain_exp:
+            return False, f"Delegate has no experience in {task['required_domain']}"
+        
+        if domain_exp['count'] < task.get('min_experience', 10):
+            return False, f"Delegate experience too low: {domain_exp['count']}"
+        
+        if domain_exp['confidence'] < task.get('min_confidence', 0.7):
+            return False, f"Delegate confidence too low: {domain_exp['confidence']:.2f}"
+    
+    # All checks passed
+    return True, "Delegate authorized, trustworthy, and capable"
+
+
+# Example usage:
+rep_token = {
+    'issuer': 'did:human:alice',
+    'delegate': 'did:aex:translator_bot',
+    'scope': {
+        'actions': ['translate'],
+        'domains': ['documents']
+    },
+    'constraints': {
+        'expires_at': '2026-02-06T00:00:00Z'
+    }
+}
+
+task = {
+    'action': 'translate',
+    'domain': 'documents',
+    'required_domain': 'translation.fr_en',
+    'min_dex': 0.75,
+    'min_experience': 20,
+    'min_confidence': 0.80
+}
+
+valid, reason = verify_delegated_agent_for_task(rep_token, task, ledger)
+# Returns: True, "Delegate authorized, trustworthy, and capable"
+```
+
+**Decision hierarchy:**
+1. **REP:** Does the agent have authority? (gate 1)
+2. **DEX:** Is the agent trustworthy? (gate 2)
+3. **HEX:** Is the agent capable? (gate 3)
+
+All three must pass for optimal selection.
 
 ---
 
@@ -1623,6 +1798,133 @@ Prevention:
   "current_time": "2026-02-04T12:00:00Z"
 }
 ```
+
+### Example 8: Delegation with HEX Verification
+
+**Scenario:** Human delegates translation work to agent, counterparty verifies both authorization and capability.
+
+**REP Token:**
+```json
+{
+  "rep_id": "rep_uuid_123",
+  "issuer": "did:human:alice",
+  "delegate": "did:aex:translator_bot_456",
+  "scope": {
+    "actions": ["translate", "proofread"],
+    "domains": ["documents", "correspondence"],
+    "limits": {
+      "max_cost": 50,
+      "max_tasks_per_day": 20
+    }
+  },
+  "constraints": {
+    "expires_at": "2026-02-06T00:00:00Z",
+    "prohibited_domains": ["legal", "medical"]
+  }
+}
+```
+
+**Delegate's Credentials:**
+```json
+{
+  "aex_id": "did:aex:translator_bot_456",
+  "dex": {
+    "alpha": 95,
+    "beta": 15,
+    "score": 0.864
+  },
+  "hex": {
+    "experience": [
+      {"domain": "translation.fr_en", "count": 180, "confidence": 0.94},
+      {"domain": "translation.es_en", "count": 120, "confidence": 0.91},
+      {"domain": "proofreading", "count": 200, "confidence": 0.96}
+    ]
+  }
+}
+```
+
+**Verification flow:**
+```
+Task: Translate French document to English
+
+Step 1: Verify REP token ✅
+- Valid signature from Alice
+- Not expired
+- Action "translate" in scope
+- Domain "documents" in scope
+
+Step 2: Verify delegate DEX ✅
+- Score: 0.864 (above 0.75 threshold)
+- Confidence: 110 (sufficient evidence)
+- Not in probation
+
+Step 3: Verify delegate HEX ✅
+- Has domain: translation.fr_en
+- Count: 180 (experienced)
+- Confidence: 0.94 (consistent performance)
+
+Result: ACCEPT
+Reasoning: Agent has authority (REP), is reliable (DEX), and is capable (HEX)
+```
+
+**Contrast: REP without capability:**
+```json
+{
+  "delegate": "did:aex:general_assistant_789",
+  "dex": {"score": 0.90},  // Highly reliable
+  "hex": {
+    "experience": [
+      {"domain": "scheduling", "count": 500},
+      {"domain": "email", "count": 300}
+    ]
+    // No translation experience!
+  }
+}
+```
+
+**Verification flow:**
+```
+Step 1: Verify REP token ✅
+Step 2: Verify delegate DEX ✅
+Step 3: Verify delegate HEX ❌
+- Missing domain: translation.fr_en
+
+Result: REJECT
+Reasoning: Agent has authority and is reliable, but lacks capability
+```
+
+**Key insight:** REP provides authorization, but HEX determines whether the delegated agent is actually suited for the specific task.
+
+---
+
+## Related Specifications
+
+AEX_REP defines authorization that works with:
+
+**AEX_ID** - Identity foundation
+- REP tokens reference agent identity (delegate field)
+- Fork events may or may not invalidate REP tokens
+- Issuer decides whether forked agent retains authorization
+
+**AEX_DEX** - Behavioral reputation
+- Delegated agent's DEX should still be evaluated
+- Low DEX agent + valid REP = authorized but risky
+- Counterparties can set DEX thresholds for delegated agents
+
+**AEX_HEX** - Experience corpus
+- Delegated agent's HEX determines task suitability
+- REP grants authority, HEX proves capability
+- Joint evaluation: "Authorized AND capable?"
+
+**Selection with REP:**
+```
+1. Verify REP token (authorized?)
+2. Check delegate DEX (reliable?)
+3. Check delegate HEX (capable?)
+4. Only proceed if all three pass
+```
+
+**Key principle:** REP is necessary but not sufficient. The delegate's actual capabilities (HEX) and reliability (DEX) still matter.
 
 ---
 
