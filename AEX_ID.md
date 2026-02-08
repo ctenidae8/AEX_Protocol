@@ -46,11 +46,11 @@ AEX_ID defines the identity substrate for synthetic agents. It establishes **who
 
 ### What AEX_ID Is NOT
 
-❌ A capability descriptor (use AEX_HEX for experience corpus)  
-❌ A reputation system (use AEX_DEX for behavioral reliability)  
-❌ An authorization token (use AEX_REP for delegation)  
-❌ A runtime environment  
-❌ A model registry  
+âŒ A capability descriptor (use AEX_HEX for experience corpus)  
+âŒ A reputation system (use AEX_DEX for behavioral reliability)  
+âŒ An authorization token (use AEX_REP for delegation)  
+âŒ A runtime environment  
+âŒ A model registry  
 
 ### Relationship to Other Primitives
 
@@ -60,8 +60,8 @@ AEX_ID defines the identity substrate for synthetic agents. It establishes **who
 - **REP** delegates on behalf of identity - revocation tied to identity
 
 **When an agent forks:**
-- Identity lineage is preserved (parent → child link)
-- DEX is inherited with fork weight (e.g., 0.5× for major fork)
+- Identity lineage is preserved (parent â†’ child link)
+- DEX is inherited with fork weight (e.g., 0.5Ã— for major fork)
 - HEX is inherited with same fork weight (experience transfers)
 - REP may or may not transfer (depends on delegation scope)  
 
@@ -499,11 +499,11 @@ def create_aex_identity():
 
 When receiving an AEX_ID, verify:
 
-1. ✅ Signature valid (Ed25519)
-2. ✅ Public key matches DID
-3. ✅ Not on local blocklist
-4. ✅ Fork lineage valid (if present)
-5. ✅ Stake valid (if claimed)
+1. âœ… Signature valid (Ed25519)
+2. âœ… Public key matches DID
+3. âœ… Not on local blocklist
+4. âœ… Fork lineage valid (if present)
+5. âœ… Stake valid (if claimed)
 
 ### Complete Verification Function
 ```python
@@ -577,8 +577,8 @@ Breakdown:
   "fork_type": "major",
   "claimed_weight": 0.5,
   "enforced_weight": 0.5,
-  "probation_period": 1209600,
-  "probation_expires": "2026-02-18T12:00:00Z",
+  "observation_target": 20,
+  "min_observations": 8,
   "timestamp": "2026-02-04T12:00:00Z",
   "reason": "Major model upgrade from GPT-4 to GPT-5 architecture",
   "author": "did:aex:AgentDeveloperPublicKey",
@@ -603,11 +603,14 @@ Breakdown:
 
 ### Fork Types
 
-| Type | Enforced Weight | Probation | Use Case |
-|------|----------------|-----------|----------|
-| **bugfix** | 1.0 | 7 days | Security patch, typo fix, minor correction |
-| **major** | 0.5 | 14 days | Model upgrade, architecture change, feature rewrite |
-| **override** | 0.1 | 30 days | Platform migration, complete rewrite, external takeover |
+| Type | Enforced Weight (λ) | Probation (interactions) | Use Case |
+|------|---------------------|--------------------------|----------|
+| **bugfix** | 1.0 | 5 | Security patch, typo fix, minor correction |
+| **minor** | 0.8 | 10 | Prompt update, skill addition, dependency bump |
+| **major** | 0.5 | 20 | Model version upgrade, architecture change, feature rewrite |
+| **override** | 0.1 | 50 | Platform migration, complete rewrite, external takeover |
+
+**Note:** Lambda is applied once at inheritance to discount parent history. Post-fork interactions accumulate at full weight. Probation is an observation window measured in interactions, not calendar time. See AEX_DEX Probation System for details.
 
 ### Fork Creation Process
 
@@ -643,8 +646,8 @@ def create_fork(parent_agent, fork_type, reason):
         'fork_type': fork_type,
         'claimed_weight': enforced_weight,  # Can claim lower, not higher
         'enforced_weight': enforced_weight,
-        'probation_period': get_probation_period(fork_type),
-        'probation_expires': calculate_probation_expiry(fork_type),
+        'observation_target': get_probation_interactions(fork_type),
+        'min_observations': get_min_observations(fork_type),
         'timestamp': datetime.utcnow().isoformat() + 'Z',
         'reason': reason,
         'author': parent_agent['aex_id'],
@@ -679,14 +682,15 @@ def get_enforced_weight(fork_type):
     }
     return weights[fork_type]
 
-def get_probation_period(fork_type):
-    """Protocol-enforced probation periods (seconds)"""
-    periods = {
-        'bugfix': 604800,      # 7 days
-        'major': 1209600,      # 14 days
-        'override': 2592000    # 30 days
+def get_probation_interactions(fork_type):
+    """Protocol-enforced probation observation windows (interaction count)"""
+    windows = {
+        'bugfix':   5,
+        'minor':    10,
+        'major':    20,
+        'override': 50
     }
-    return periods[fork_type]
+    return windows[fork_type]
 ```
 
 **Step 2: Publish fork event**
@@ -757,8 +761,8 @@ def initialize_child_dex(fork_event, child_keypair):
         'probation': {
             'active': True,
             'fork_type': fork_event['fork_type'],
-            'expires': fork_event['probation_expires'],
-            'confidence_multiplier': 0.5,
+            'observation_target': fork_event.get('observation_target', 20),
+            'pre_fork_dex': fork_event.get('parent_dex_snapshot', {}).get('score', 0.5),
             'successful_tasks': 0,
             'required_tasks': 10
         }
@@ -890,8 +894,9 @@ def enforce_fork_weight(claimed_weight, fork_type):
     This weight applies to BOTH DEX and HEX inheritance
     """
     max_weights = {
-        'bugfix': 1.0,
-        'major': 0.5,
+        'bugfix':   1.0,
+        'minor':    0.8,
+        'major':    0.5,
         'override': 0.1
     }
     
@@ -910,9 +915,9 @@ def enforce_fork_weight(claimed_weight, fork_type):
 
 | Fork Type | Weight | DEX Inheritance | HEX Inheritance |
 |-----------|--------|----------------|-----------------|
-| bugfix | 1.0 | α'=α×1.0, β'=β×1.0 | count'=count×1.0 |
-| major | 0.5 | α'=α×0.5, β'=β×0.5 | count'=count×0.5 |
-| override | 0.1 | α'=α×0.1, β'=β×0.1 | count'=count×0.1 |
+| bugfix | 1.0 | Î±'=Î±Ã—1.0, Î²'=Î²Ã—1.0 | count'=countÃ—1.0 |
+| major | 0.5 | Î±'=Î±Ã—0.5, Î²'=Î²Ã—0.5 | count'=countÃ—0.5 |
+| override | 0.1 | Î±'=Î±Ã—0.1, Î²'=Î²Ã—0.1 | count'=countÃ—0.1 |
 
 **Rationale:** If the fork changes the agent significantly enough to reduce trust (DEX), it should also reduce confidence in transferred experience (HEX).
 
@@ -1030,7 +1035,7 @@ def visualize_lineage(agent_id, shared_ledger):
                 )
                 fork_type = f" [{last_fork['fork_type']}]"
         
-        tree = f"{indent}├─ {agent_id[:20]}...{fork_type}\n"
+        tree = f"{indent}â”œâ”€ {agent_id[:20]}...{fork_type}\n"
         
         # Recursively add parent
         if identity['lineage']['parent_id']:
@@ -1042,10 +1047,10 @@ def visualize_lineage(agent_id, shared_ledger):
 
 # Example output:
 """
-├─ did:aex:Root...
-  ├─ did:aex:Child1... [major]
-    ├─ did:aex:Child2... [bugfix]
-      ├─ did:aex:Current... [major]
+â”œâ”€ did:aex:Root...
+  â”œâ”€ did:aex:Child1... [major]
+    â”œâ”€ did:aex:Child2... [bugfix]
+      â”œâ”€ did:aex:Current... [major]
 """
 ```
 
@@ -1257,15 +1262,15 @@ def trigger_slashing(agent_id, stake, conditions_met):
 ### Directory Structure
 ```
 shared_ledger/
-├── identities/
-│   └── {aex_id}/
-│       ├── aex_id.json
-│       ├── fork_events/
-│       │   ├── {fork_id_1}.json
-│       │   └── {fork_id_2}.json
-│       ├── slashing_events/
-│       │   └── {slashing_id}.json
-│       └── metadata.json (optional)
+â”œâ”€â”€ identities/
+â”‚   â””â”€â”€ {aex_id}/
+â”‚       â”œâ”€â”€ aex_id.json
+â”‚       â”œâ”€â”€ fork_events/
+â”‚       â”‚   â”œâ”€â”€ {fork_id_1}.json
+â”‚       â”‚   â””â”€â”€ {fork_id_2}.json
+â”‚       â”œâ”€â”€ slashing_events/
+â”‚       â”‚   â””â”€â”€ {slashing_id}.json
+â”‚       â””â”€â”€ metadata.json (optional)
 ```
 
 ### Publishing Identity
@@ -1474,8 +1479,8 @@ class AEXIdentity:
             'fork_type': fork_type,
             'claimed_weight': self._get_enforced_weight(fork_type),
             'enforced_weight': self._get_enforced_weight(fork_type),
-            'probation_period': self._get_probation_period(fork_type),
-            'probation_expires': self._calculate_probation_expiry(fork_type),
+            'observation_target': self._get_probation_interactions(fork_type),
+            'min_observations': self._get_min_observations(fork_type),
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'reason': reason,
             'author': self.aex_id,
@@ -1492,7 +1497,7 @@ class AEXIdentity:
         weights = {'bugfix': 1.0, 'major': 0.5, 'override': 0.1}
         return weights[fork_type]
     
-    def _get_probation_period(self, fork_type):
+    def _get_probation_interactions(self, fork_type):
         """Get probation period in seconds"""
         periods = {
             'bugfix': 604800,
@@ -1504,7 +1509,7 @@ class AEXIdentity:
     def _calculate_probation_expiry(self, fork_type):
         """Calculate probation expiry timestamp"""
         from datetime import timedelta
-        period_seconds = self._get_probation_period(fork_type)
+        observation_target = self._get_probation_interactions(fork_type)
         expiry = datetime.utcnow() + timedelta(seconds=period_seconds)
         return expiry.isoformat() + 'Z'
 
@@ -1523,12 +1528,12 @@ print(identity_obj)
 **Critical security requirements:**
 
 1. **Private key storage:**
-   - ❌ Never store in plaintext
-   - ❌ Never log or print
-   - ❌ Never transmit over network
-   - ✅ Use hardware security modules (HSM)
-   - ✅ Use secure enclaves (TPM, SGX)
-   - ✅ Encrypt at rest with strong passphrase
+   - âŒ Never store in plaintext
+   - âŒ Never log or print
+   - âŒ Never transmit over network
+   - âœ… Use hardware security modules (HSM)
+   - âœ… Use secure enclaves (TPM, SGX)
+   - âœ… Encrypt at rest with strong passphrase
 
 2. **Key rotation:**
    - Not supported in v1.0 (requires identity migration via fork)
@@ -1580,17 +1585,17 @@ Economic cost: Lose stake if identity abandoned
 ### Privacy Considerations
 
 **What AEX_ID reveals:**
-- ✅ Public key (necessary for verification)
-- ✅ Creation timestamp
-- ✅ Fork lineage (transparent by design)
-- ✅ Stake amount (if posted)
+- âœ… Public key (necessary for verification)
+- âœ… Creation timestamp
+- âœ… Fork lineage (transparent by design)
+- âœ… Stake amount (if posted)
 
 **What AEX_ID does NOT reveal:**
-- ❌ Agent architecture or model type
-- ❌ Hosting location or infrastructure
-- ❌ Capabilities or specialization (see AEX_HEX)
-- ❌ Interaction history (see AEX_DEX ledger)
-- ❌ Private key (never shared)
+- âŒ Agent architecture or model type
+- âŒ Hosting location or infrastructure
+- âŒ Capabilities or specialization (see AEX_HEX)
+- âŒ Interaction history (see AEX_DEX ledger)
+- âŒ Private key (never shared)
 
 **Privacy vs Trust tradeoff:**
 - Shared ledger requirement sacrifices privacy for verifiability
@@ -1642,8 +1647,8 @@ Economic cost: Lose stake if identity abandoned
   "fork_type": "bugfix",
   "claimed_weight": 1.0,
   "enforced_weight": 1.0,
-  "probation_period": 604800,
-  "probation_expires": "2026-02-11T12:00:00Z",
+  "observation_target": 5,
+  "min_observations": 3,
   "timestamp": "2026-02-04T12:00:00Z",
   "reason": "Fixed critical security vulnerability in input validation",
   "author": "did:aex:ParentAgent123",
@@ -1674,17 +1679,17 @@ Economic cost: Lose stake if identity abandoned
 
 **Child initial DEX:**
 ```
-Parent: α=85, β=15
+Parent: Î±=85, Î²=15
 Fork weight: 1.0 (bugfix)
 
 Child calculation:
-  α_child = (85 × 1.0) + 2 = 87
-  β_child = (15 × 1.0) + 2 = 17
+  Î±_child = (85 Ã— 1.0) + 2 = 87
+  Î²_child = (15 Ã— 1.0) + 2 = 17
   
 Child DEX: 87 / (87+17) = 0.8365
 Child confidence: 104
 
-Probation: 7 days, confidence_multiplier=0.5
+Probation: 5 interactions, observation-only
 ```
 
 ### Example 3: Major Fork with Stake
@@ -1725,8 +1730,8 @@ Probation: 7 days, confidence_multiplier=0.5
   "fork_type": "major",
   "claimed_weight": 0.5,
   "enforced_weight": 0.5,
-  "probation_period": 1209600,
-  "probation_expires": "2026-02-18T12:00:00Z",
+  "observation_target": 20,
+  "min_observations": 8,
   "timestamp": "2026-02-04T12:00:00Z",
   "reason": "Upgraded from GPT-4 to GPT-5 base model",
   "author": "did:aex:StakedParent",
@@ -1770,17 +1775,17 @@ Probation: 7 days, confidence_multiplier=0.5
 
 **Child initial DEX:**
 ```
-Parent: α=200, β=20
+Parent: Î±=200, Î²=20
 Fork weight: 0.5 (major)
 
 Child calculation:
-  α_child = (200 × 0.5) + 2 = 102
-  β_child = (20 × 0.5) + 2 = 12
+  Î±_child = (200 Ã— 0.5) + 2 = 102
+  Î²_child = (20 Ã— 0.5) + 2 = 12
   
 Child DEX: 102 / (102+12) = 0.8947
 Child confidence: 114
 
-Probation: 14 days, confidence_multiplier=0.5
+Probation: 20 interactions, observation-only
 Stake inherited: $5,000 USD
 ```
 
@@ -1810,7 +1815,7 @@ Stake inherited: $5,000 USD
 {
   "fork_type": "major",
   "enforced_weight": 0.5,
-  "reason": "Model upgrade: GPT-4 → GPT-5"
+  "reason": "Model upgrade: GPT-4 â†’ GPT-5"
 }
 ```
 
@@ -1819,15 +1824,15 @@ Stake inherited: $5,000 USD
 {
   "aex_id": "did:aex:ChildAgent",
   "dex": {
-    "alpha": 52.0,    // (100 × 0.5) + 2
-    "beta": 12.0,     // (20 × 0.5) + 2
+    "alpha": 52.0,    // (100 Ã— 0.5) + 2
+    "beta": 12.0,     // (20 Ã— 0.5) + 2
     "score": 0.813    // Still high, but slightly reduced
   },
   "hex": {
     "experience": [
-      {"domain": "translation.fr_en", "count": 75, "confidence": 0.88},  // 150×0.5, 0.93-0.05
-      {"domain": "coding.python", "count": 40, "confidence": 0.83},      // 80×0.5, 0.88-0.05
-      {"domain": "summarization", "count": 30, "confidence": 0.80}       // 60×0.5, 0.85-0.05
+      {"domain": "translation.fr_en", "count": 75, "confidence": 0.88},  // 150Ã—0.5, 0.93-0.05
+      {"domain": "coding.python", "count": 40, "confidence": 0.83},      // 80Ã—0.5, 0.88-0.05
+      {"domain": "summarization", "count": 30, "confidence": 0.80}       // 60Ã—0.5, 0.85-0.05
     ]
   }
 }
@@ -1858,7 +1863,7 @@ AEX_ID provides the identity foundation for:
 
 **AEX_HEX** - Experience corpus
 - Fork events trigger HEX inheritance
-- Same fork weight applies to HEX (experience counts × weight)
+- Same fork weight applies to HEX (experience counts Ã— weight)
 - Capabilities transfer through lineage with appropriate discounting
 
 **AEX_REP** - Delegation and authority
