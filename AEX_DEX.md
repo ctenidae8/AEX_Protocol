@@ -38,14 +38,14 @@ AEX_DEX defines the behavioral reputation substrate for synthetic agents. It ans
 
 ### What AEX_DEX Measures
 
-✅ **Observable behavior** - Success/failure in real tasks  
-✅ **Consistency** - How predictable the agent is  
-✅ **Confidence** - How much evidence supports the score  
-✅ **Domain expertise** - Optional per-domain reputation  
+âœ… **Observable behavior** - Success/failure in real tasks  
+âœ… **Consistency** - How predictable the agent is  
+âœ… **Confidence** - How much evidence supports the score  
+âœ… **Domain expertise** - Optional per-domain reputation  
 
-❌ **NOT intentions** - We don't care why it succeeded/failed  
-❌ **NOT capability depth** - Use AEX_HEX for experience and specialization  
-❌ **NOT identity** - Use AEX_ID for that  
+âŒ **NOT intentions** - We don't care why it succeeded/failed  
+âŒ **NOT capability depth** - Use AEX_HEX for experience and specialization  
+âŒ **NOT identity** - Use AEX_ID for that  
 
 ### Relationship to AEX_HEX
 
@@ -80,15 +80,18 @@ DEX is based **solely on observable outcomes**, not:
 
 ### 2. Bayesian Uncertainty
 DEX provides:
-- **Point estimate** (α / (α + β)) - Expected reliability
+- **Point estimate** (Î± / (Î± + Î²)) - Expected reliability
 - **Uncertainty measure** (n_eff, variance) - Confidence in estimate
 - **Confidence intervals** - Probabilistic bounds
 
 ### 3. Fork Awareness
 When agents fork (update/rewrite), DEX adjusts:
 - **Bugfix (1.0)** - Full trust continuity
+- **Minor (0.8)** - High trust continuity
 - **Major (0.5)** - Partial trust continuity  
 - **Override (0.1)** - Minimal trust continuity
+
+Fork weight (lambda) is applied once at inheritance. Post-fork interactions accumulate at full weight.
 
 ### 4. Incremental Updates
 DEX updates **online** after each interaction:
@@ -109,9 +112,9 @@ DEX measures **reliability** (behavioral consistency).
 HEX measures **capability** (domain experience).
 
 Both are needed for effective agent selection:
-- High DEX + No relevant HEX → Trustworthy but wrong specialist
-- High HEX + Low DEX → Experienced but unreliable
-- High DEX + High HEX → Optimal choice
+- High DEX + No relevant HEX â†’ Trustworthy but wrong specialist
+- High HEX + Low DEX â†’ Experienced but unreliable
+- High DEX + High HEX â†’ Optimal choice
 
 DEX provides the trust gate; HEX provides the capability ranking.
 
@@ -141,12 +144,17 @@ DEX provides the trust gate; HEX provides the capability ranking.
   ],
   "probation": {
     "active": true,
+    "fork_id": "fork_uuid_456",
     "fork_type": "major",
     "started_at": "2026-01-15T08:00:00Z",
-    "expires_at": "2026-01-29T08:00:00Z",
-    "confidence_multiplier": 0.5,
-    "successful_tasks": 3,
-    "required_tasks": 10
+    "pre_fork_dex": 0.833,
+    "observation_target": 20,
+    "min_observations": 8,
+    "interactions_completed": 3,
+    "successful_interactions": 3,
+    "outcomes": [0.90, 0.85, 0.80],
+    "exit_type": null,
+    "exited_at": null
   },
   "metadata": {
     "total_interactions": 85,
@@ -166,16 +174,16 @@ DEX provides the trust gate; HEX provides the capability ranking.
 - Example: `did:aex:5Z7XR8pN3kY1mW9vQ4fT6hL2sJ8cB3nE9xA1dK7pR4wM`
 
 #### `alpha` (required)
-- Type: Float ≥ 0
+- Type: Float â‰¥ 0
 - Purpose: Evidence of **success** (weighted successes accumulated)
 - Initial value: 2.0 (neutral prior)
-- Update: `α_new = α_old + (outcome × weight × lineage_factor)`
+- Update: `α_new = α_old + (outcome × weight)`
 
 #### `beta` (required)
-- Type: Float ≥ 0
+- Type: Float â‰¥ 0
 - Purpose: Evidence of **failure** (weighted failures accumulated)
 - Initial value: 2.0 (neutral prior)
-- Update: `β_new = β_old + ((1 - outcome) × weight × lineage_factor)`
+- Update: `β_new = β_old + ((1 - outcome) × weight)`
 
 #### `last_updated` (required)
 - Type: ISO 8601 timestamp (UTC)
@@ -197,8 +205,9 @@ DEX provides the trust gate; HEX provides the capability ranking.
 
 #### `probation` (optional, null if not in probation)
 - Type: Object or null
-- Purpose: Track probation status after fork
-- Contains: active flag, expiry, confidence multiplier, task counts
+- Purpose: Track observation window after fork
+- Contains: active flag, pre-fork baseline, observation target, interaction outcomes
+- Probation is observation-only -- does not penalize interaction weight
 - See [Probation System](#probation-system)
 
 #### `metadata` (optional)
@@ -221,17 +230,17 @@ DEX provides the trust gate; HEX provides the capability ranking.
 
 AEX_DEX models agent reliability as a **Beta distribution**:
 ```
-Beta(α, β)
+Beta(Î±, Î²)
 
 Where:
-  α = accumulated evidence of success
-  β = accumulated evidence of failure
+  Î± = accumulated evidence of success
+  Î² = accumulated evidence of failure
 ```
 
 ### Why Beta Distribution?
 
 1. **Conjugate prior for Bernoulli** - Natural for binary outcomes
-2. **Interpretable parameters** - α = successes, β = failures
+2. **Interpretable parameters** - Î± = successes, Î² = failures
 3. **Supports online learning** - Easy incremental updates
 4. **Quantifies uncertainty** - Variance decreases with evidence
 5. **Well-studied** - Extensive literature and tooling
@@ -240,7 +249,7 @@ Where:
 
 **DEX Score (Expected Value):**
 ```
-DEX = α / (α + β)
+DEX = Î± / (Î± + Î²)
 
 Range: [0, 1]
 Interpretation: Expected success probability
@@ -248,15 +257,15 @@ Interpretation: Expected success probability
 
 **Effective Sample Size (Confidence):**
 ```
-n_eff = α + β
+n_eff = Î± + Î²
 
-Range: [0, ∞)
+Range: [0, âˆž)
 Interpretation: Total evidence accumulated
 ```
 
 **Variance (Uncertainty):**
 ```
-Var = (α × β) / ((α + β)² × (α + β + 1))
+Var = (Î± Ã— Î²) / ((Î± + Î²)Â² Ã— (Î± + Î² + 1))
 
 Range: [0, 0.25]
 Interpretation: Lower variance = more confident
@@ -264,47 +273,47 @@ Interpretation: Lower variance = more confident
 
 **Standard Deviation:**
 ```
-σ = √Var
+Ïƒ = âˆšVar
 ```
 
 ### Interpretation Examples
 
 **Example 1: New agent**
 ```
-α = 2, β = 2
+Î± = 2, Î² = 2
 DEX = 2 / 4 = 0.50
 n_eff = 4
-Var = (2×2) / (16×5) = 0.05
+Var = (2Ã—2) / (16Ã—5) = 0.05
 
 Interpretation: Untested, 50% expected success, high uncertainty
 ```
 
 **Example 2: Proven reliable agent**
 ```
-α = 95, β = 5
+Î± = 95, Î² = 5
 DEX = 95 / 100 = 0.95
 n_eff = 100
-Var = (95×5) / (10000×101) ≈ 0.0005
+Var = (95Ã—5) / (10000Ã—101) â‰ˆ 0.0005
 
 Interpretation: Highly reliable, 95% expected success, very confident
 ```
 
 **Example 3: Proven unreliable agent**
 ```
-α = 20, β = 80
+Î± = 20, Î² = 80
 DEX = 20 / 100 = 0.20
 n_eff = 100
-Var = (20×80) / (10000×101) ≈ 0.002
+Var = (20Ã—80) / (10000Ã—101) â‰ˆ 0.002
 
 Interpretation: Poor performance, 20% expected success, very confident it's bad
 ```
 
 **Example 4: Inconsistent agent**
 ```
-α = 50, β = 50
+Î± = 50, Î² = 50
 DEX = 50 / 100 = 0.50
 n_eff = 100
-Var = (50×50) / (10000×101) ≈ 0.0025
+Var = (50Ã—50) / (10000Ã—101) â‰ˆ 0.0025
 
 Interpretation: Coin flip agent, 50% success, confident it's unreliable
 ```
@@ -315,7 +324,7 @@ Interpretation: Coin flip agent, 50% success, confident it's unreliable
 
 ### Basic Update Rule
 
-After each interaction with outcome ∈ [0, 1] and weight ≥ 0:
+After each interaction with outcome âˆˆ [0, 1] and weight â‰¥ 0:
 ```python
 def update_dex_basic(alpha, beta, outcome, weight):
     """
@@ -341,7 +350,7 @@ outcome = 0.85  # Good performance
 weight = 1.0    # Standard weight
 
 new_alpha, new_beta = update_dex_basic(alpha, beta, outcome, weight)
-# Result: α=50.85, β=10.15
+# Result: Î±=50.85, Î²=10.15
 
 old_dex = alpha / (alpha + beta)  # 0.833
 new_dex = new_alpha / (new_alpha + new_beta)  # 0.8337
@@ -353,15 +362,15 @@ new_dex = new_alpha / (new_alpha + new_beta)  # 0.8337
 
 **Continuous outcomes [0, 1]:**
 ```
-outcome = 1.0   → Perfect success
-outcome = 0.9   → Excellent, minor issues
-outcome = 0.8   → Good, some problems
-outcome = 0.7   → Acceptable, notable issues
-outcome = 0.5   → Neutral, neither good nor bad
-outcome = 0.3   → Poor, significant problems
-outcome = 0.2   → Bad, major failures
-outcome = 0.1   → Very bad, nearly total failure
-outcome = 0.0   → Complete failure
+outcome = 1.0   â†’ Perfect success
+outcome = 0.9   â†’ Excellent, minor issues
+outcome = 0.8   â†’ Good, some problems
+outcome = 0.7   â†’ Acceptable, notable issues
+outcome = 0.5   â†’ Neutral, neither good nor bad
+outcome = 0.3   â†’ Poor, significant problems
+outcome = 0.2   â†’ Bad, major failures
+outcome = 0.1   â†’ Very bad, nearly total failure
+outcome = 0.0   â†’ Complete failure
 ```
 
 ### Weight Semantics
@@ -446,8 +455,8 @@ def complete_interaction_update(session_outcome, shared_ledger):
 ```
 
 **Key insight:** DEX and HEX both update from the same interaction, but measure different dimensions:
-- **DEX:** "Was this outcome good?" → Reliability signal
-- **HEX:** "What domain was this in?" → Capability signal
+- **DEX:** "Was this outcome good?" â†’ Reliability signal
+- **HEX:** "What domain was this in?" â†’ Capability signal
 
 ---
 
@@ -455,57 +464,57 @@ def complete_interaction_update(session_outcome, shared_ledger):
 
 ### Complete Update Rule
 
-**With fork weighting and probation:**
+**Post-fork interactions accumulate at full weight:**
 ```python
-def update_dex_complete(alpha, beta, outcome, weight, fork_weight, probation_active):
+def update_dex(alpha, beta, outcome, weight):
     """
-    Complete DEX update with fork and probation weighting
+    DEX update after interaction.
+    
+    Fork weight (lambda) is NOT applied here. Lambda is applied once at
+    inheritance (see calculate_child_dex). Post-fork interactions accumulate
+    at full weight -- the agent's new work is new evidence about the
+    post-fork agent, not about the pre-fork agent.
+    
+    Probation does NOT affect interaction weight. Probation is an
+    observation window that controls exit conditions, not accumulation
+    rate. See Probation System section.
     
     Args:
         alpha: Current success evidence
         beta: Current failure evidence
         outcome: Interaction outcome [0, 1]
-        weight: Base interaction weight
-        fork_weight: Lineage weight from most recent fork [0, 1]
-        probation_active: Whether agent is in probation period
+        weight: Base interaction weight (stakes-based, not fork-based)
     
     Returns:
         (new_alpha, new_beta)
     """
-    # Apply probation multiplier
-    if probation_active:
-        confidence_multiplier = 0.5
-    else:
-        confidence_multiplier = 1.0
-    
-    # Calculate effective weight
-    effective_weight = weight * fork_weight * confidence_multiplier
-    
-    # Bayesian update
-    new_alpha = alpha + (outcome * effective_weight)
-    new_beta = beta + ((1 - outcome) * effective_weight)
+    new_alpha = alpha + (outcome * weight)
+    new_beta = beta + ((1 - outcome) * weight)
     
     return new_alpha, new_beta
 
-# Example: Agent in probation after major fork
-alpha, beta = 52.0, 12.0
+# Example: Agent after major fork, in probation
+# Fork discount was already applied at inheritance.
+# New interactions count at full weight.
+alpha, beta = 52.0, 7.0   # Inherited from parent (100,10) via major fork lambda=0.5, +2 prior
 outcome = 0.9
-weight = 1.0
-fork_weight = 0.5  # Major fork
-probation_active = True
+weight = 1.0               # Standard interaction weight -- no fork discount
 
-new_alpha, new_beta = update_dex_complete(
-    alpha, beta, outcome, weight, fork_weight, probation_active
-)
+new_alpha, new_beta = update_dex(alpha, beta, outcome, weight)
 
-# Effective weight = 1.0 × 0.5 × 0.5 = 0.25
-# new_alpha = 52 + (0.9 × 0.25) = 52.225
-# new_beta = 12 + (0.1 × 0.25) = 12.025
+# new_alpha = 52 + (0.9 * 1.0) = 52.9
+# new_beta = 7 + (0.1 * 1.0) = 7.1
+# old_dex = 52/59 = 0.881
+# new_dex = 52.9/60.0 = 0.882
 
-# DEX barely moved due to probation
-old_dex = 52/64 = 0.8125
-new_dex = 52.225/64.25 = 0.8129
+# DEX moves meaningfully. The agent can re-prove itself.
 ```
+
+**Design rationale -- why lambda is not applied to post-fork interactions:**
+
+The fork weight lambda encodes: "How much does the parent's track record predict the child's behavior?" This is a one-time assessment at inheritance. Once the child exists and begins accumulating its own interactions, those interactions are direct evidence about the child. They should count at full weight because they ARE the child's track record, not a discounted version of the parent's.
+
+Applying lambda to every post-fork interaction would permanently handicap forked agents. A major-forked agent (lambda=0.5) would accumulate evidence at half rate forever -- making it impossible to ever fully "re-prove" through good work. This contradicts the protocol's design intent.
 
 ### Fork Weight Calculation
 ```python
@@ -582,157 +591,154 @@ def calculate_lineage_factor(agent_id, shared_ledger):
 # Generation 2 (bugfix): weight = 1.0
 # Generation 3 (major fork): weight = 0.5
 #
-# Cumulative lineage factor = 1.0 × 0.5 × 1.0 × 0.5 = 0.25
+# Cumulative lineage factor = 1.0 Ã— 0.5 Ã— 1.0 Ã— 0.5 = 0.25
 ```
 
 ---
 
 ## Probation System
 
-### Probation Rules
+### Purpose
 
-**Automatic probation after fork:**
+Probation is an **observation window** after a fork event. Its purpose is to monitor whether the forked agent maintains performance comparable to its pre-fork baseline. Probation does NOT penalize interaction weight -- post-fork interactions accumulate at full weight (see Fork-Aware Weighting section).
 
-| Fork Type | Probation Period | Confidence Multiplier | Required Tasks |
-|-----------|------------------|----------------------|----------------|
-| Bugfix | 7 days | 0.5 | 10 |
-| Major | 14 days | 0.5 | 10 |
-| Override | 30 days | 0.5 | 10 |
+### Probation Parameters
+
+| Fork Type | Observation Interactions | Min Observations Before Assessment | Success Threshold |
+|-----------|------------------------|------------------------------------|--------------------|
+| Bugfix    | 5                      | 3                                  | outcome >= 0.7     |
+| Minor     | 10                     | 5                                  | outcome >= 0.7     |
+| Major     | 20                     | 8                                  | outcome >= 0.7     |
+| Override  | 50                     | 15                                 | outcome >= 0.7     |
+
+- **Observation interactions:** Total interactions required for standard exit.
+- **Min observations:** Minimum interactions before accelerated exit assessment is allowed.
+- **Success threshold:** Outcome level that counts as a "successful" interaction for probation tracking.
 
 ### Probation Structure
+
 ```json
 {
   "probation": {
     "active": true,
+    "fork_id": "uuid",
     "fork_type": "major",
     "started_at": "2026-01-15T08:00:00Z",
-    "expires_at": "2026-01-29T08:00:00Z",
-    "confidence_multiplier": 0.5,
-    "successful_tasks": 3,
-    "required_tasks": 10,
-    "tasks": [
-      {
-        "session_id": "uuid_1",
-        "outcome": 0.9,
-        "timestamp": "2026-01-16T10:00:00Z"
-      },
-      {
-        "session_id": "uuid_2",
-        "outcome": 0.85,
-        "timestamp": "2026-01-17T14:00:00Z"
-      },
-      {
-        "session_id": "uuid_3",
-        "outcome": 0.8,
-        "timestamp": "2026-01-18T09:00:00Z"
-      }
-    ]
+    "pre_fork_dex": 0.909,
+    "observation_target": 20,
+    "min_observations": 8,
+    "interactions_completed": 3,
+    "successful_interactions": 3,
+    "outcomes": [0.90, 0.85, 0.80],
+    "exit_type": null,
+    "exited_at": null
   }
 }
 ```
 
-### Probation Exit Conditions
+**Key field: `pre_fork_dex`.** This is the parent's DEX score at the moment of fork, recorded as part of the probation state. It serves as the baseline for accelerated exit assessment.
 
-**Exit probation when EITHER:**
+### Exit Conditions
 
-1. **Time expires** - Probation period elapses
-2. **Task threshold met** - Complete required successful tasks
+Probation ends via one of two paths:
 
-**"Successful task" definition:**
-- outcome ≥ 0.7
-- No disputes
-- Properly witnessed (if required)
+**Accelerated exit:** After completing `min_observations` interactions, if the agent's post-fork mean outcome >= `pre_fork_dex`, probation clears immediately. The fork didn't degrade performance -- there's no reason to keep observing.
 
-### Probation Checking
+**Standard exit:** After completing `observation_target` interactions, probation clears regardless of performance. The observation window has closed. Post-probation performance is tracked by normal DEX mechanics.
+
 ```python
-def check_probation_status(agent_id, shared_ledger):
+def check_probation_exit(probation, current_dex_score):
     """
-    Check if agent is in probation and if it should exit
+    Check whether probation should end.
+    
+    Called after each interaction during probation.
     
     Returns:
-        dict: {
-            'active': bool,
-            'expires': timestamp or None,
-            'progress': dict or None
-        }
+        (should_exit: bool, exit_type: str or None)
     """
-    dex = shared_ledger.get(f"dex/{agent_id}/current.json")
-    probation = dex.get('probation')
+    if not probation['active']:
+        return False, None
     
-    if not probation or not probation['active']:
-        return {'active': False, 'expires': None, 'progress': None}
+    n = probation['interactions_completed']
     
-    now = datetime.utcnow()
-    expires = datetime.fromisoformat(probation['expires_at'].replace('Z', '+00:00'))
+    # Accelerated exit: performance meets or exceeds baseline
+    if n >= probation['min_observations']:
+        post_fork_mean = sum(probation['outcomes']) / n
+        if post_fork_mean >= probation['pre_fork_dex']:
+            return True, 'accelerated'
     
-    # Check exit condition 1: Time expired
-    if now > expires:
-        return {
-            'active': False,
-            'expires': None,
-            'progress': None,
-            'exit_reason': 'time_expired'
-        }
+    # Standard exit: observation window complete
+    if n >= probation['observation_target']:
+        return True, 'standard'
     
-    # Check exit condition 2: Task threshold met
-    successful_tasks = probation['successful_tasks']
-    required_tasks = probation['required_tasks']
-    
-    if successful_tasks >= required_tasks:
-        return {
-            'active': False,
-            'expires': None,
-            'progress': None,
-            'exit_reason': 'tasks_completed'
-        }
-    
-    # Still in probation
-    return {
-        'active': True,
-        'expires': probation['expires_at'],
-        'progress': {
-            'tasks_completed': successful_tasks,
-            'tasks_required': required_tasks,
-            'percentage': successful_tasks / required_tasks,
-            'days_remaining': (expires - now).days
-        }
-    }
-```
+    return False, None
 
-### Probation Update
-```python
-def update_probation_after_interaction(agent_id, outcome, session_id, shared_ledger):
+
+def update_probation(probation, outcome, session_id):
     """
-    Update probation progress after interaction
+    Record an interaction during probation.
+    
+    Called after each DEX update (which happens at full weight).
     """
-    dex = shared_ledger.get(f"dex/{agent_id}/current.json")
-    probation = dex['probation']
+    probation['interactions_completed'] += 1
+    probation['outcomes'].append(outcome)
     
-    if not probation or not probation['active']:
-        return  # Not in probation
-    
-    # Add task to probation record
-    probation['tasks'].append({
-        'session_id': session_id,
-        'outcome': outcome,
-        'timestamp': datetime.utcnow().isoformat() + 'Z'
-    })
-    
-    # If successful (outcome ≥ 0.7), increment counter
     if outcome >= 0.7:
-        probation['successful_tasks'] += 1
+        probation['successful_interactions'] += 1
     
-    # Check if should exit probation
-    if probation['successful_tasks'] >= probation['required_tasks']:
+    # Check exit
+    should_exit, exit_type = check_probation_exit(probation, None)
+    
+    if should_exit:
         probation['active'] = False
-        probation['exit_reason'] = 'tasks_completed'
+        probation['exit_type'] = exit_type
         probation['exited_at'] = datetime.utcnow().isoformat() + 'Z'
     
-    # Save updated DEX
-    dex['probation'] = probation
-    signed_dex = sign_dex(dex, agent_private_key)
-    shared_ledger.put(f"dex/{agent_id}/current.json", signed_dex)
+    return probation
 ```
+
+### Probation Interaction Flow
+
+```
+Fork event occurs
+    |
+    v
+Probation initialized:
+  - pre_fork_dex recorded from parent
+  - observation_target set by fork type
+  - min_observations set by fork type
+    |
+    v
+Agent begins new interactions
+  - Each interaction: DEX updates at FULL weight (no penalty)
+  - Each interaction: probation tracker records outcome
+    |
+    |--- After min_observations: check accelerated exit
+    |    mean(outcomes) >= pre_fork_dex? -> EXIT (accelerated)
+    |
+    |--- After observation_target: -> EXIT (standard)
+    |
+    v
+Probation cleared
+  - Agent is no longer in probation
+  - All subsequent interactions are normal
+  - Probation record preserved in history for audit
+```
+
+### What Probation Does NOT Do
+
+- Probation does **not** reduce interaction weight. Post-fork work counts fully.
+- Probation does **not** have a calendar expiry. It is measured in interactions, not days. (Calendar-based probation penalizes low-frequency agents and doesn't penalize high-frequency ones. Interactions are the actual evidence unit.)
+- Probation does **not** prevent the agent from accepting work. An agent in probation is available on the marketplace. Its probation status is visible to counterparties, who can decide for themselves whether to engage.
+
+### v1.1 Extension: Extended Probation & Reclassification
+
+The following features are designed but deferred to v1.1, pending baseline performance data from the marketplace:
+
+- **Extended probation:** If post-fork performance drops significantly below baseline (threshold TBD based on observed variance), the observation window extends automatically.
+- **Fork reclassification:** If performance drops severely, the fork type is escalated (minor to major, major to override) and inherited DEX is recalculated with the new lambda.
+
+These features require empirical data about normal performance variance to set meaningful thresholds. The v1.0 sandbox will generate this data.
 
 ---
 
@@ -926,9 +932,9 @@ domains = ['finance', 'technology']
 updated_dex = update_multidimensional_dex(dex, outcome, weight, domains)
 
 # Result:
-# global: α=100.9, β=15.1
-# finance: α=50.9, β=5.1
-# technology: α=2.9, β=2.1 (newly created)
+# global: Î±=100.9, Î²=15.1
+# finance: Î±=50.9, Î²=5.1
+# technology: Î±=2.9, Î²=2.1 (newly created)
 ```
 
 ### Domain Selection Strategy
@@ -985,14 +991,14 @@ def select_agent_by_domain(candidates, required_domains, min_dex=0.75):
 ### Directory Structure
 ```
 shared_ledger/
-├── dex/
-│   └── {agent_id}/
-│       ├── current.json           # Current DEX state
-│       ├── history/
-│       │   ├── 2026-02-01T12:00:00Z.json
-│       │   ├── 2026-02-02T14:30:00Z.json
-│       │   └── 2026-02-03T09:15:00Z.json
-│       └── metadata.json
+â”œâ”€â”€ dex/
+â”‚   â””â”€â”€ {agent_id}/
+â”‚       â”œâ”€â”€ current.json           # Current DEX state
+â”‚       â”œâ”€â”€ history/
+â”‚       â”‚   â”œâ”€â”€ 2026-02-01T12:00:00Z.json
+â”‚       â”‚   â”œâ”€â”€ 2026-02-02T14:30:00Z.json
+â”‚       â”‚   â””â”€â”€ 2026-02-03T09:15:00Z.json
+â”‚       â””â”€â”€ metadata.json
 ```
 
 ### Publishing DEX Update
@@ -1348,10 +1354,10 @@ selected = select_agent_with_hex(
 
 | DEX Score | HEX Match | Outcome |
 |-----------|-----------|---------|
-| High | Yes | ✅ **SELECT** - Trustworthy specialist |
-| High | No | ❌ Reject - Wrong domain |
-| Low | Yes | ❌ Reject - Unreliable |
-| Low | No | ❌ Reject - Both failures |
+| High | Yes | âœ… **SELECT** - Trustworthy specialist |
+| High | No | âŒ Reject - Wrong domain |
+| Low | Yes | âŒ Reject - Unreliable |
+| Low | No | âŒ Reject - Both failures |
 
 ---
 
@@ -1360,7 +1366,7 @@ selected = select_agent_with_hex(
 ### Minimal Implementation
 
 **Required components:**
-- [ ] Beta distribution math (α, β calculations)
+- [ ] Beta distribution math (Î±, Î² calculations)
 - [ ] Bayesian update logic
 - [ ] Fork weight enforcement
 - [ ] Probation tracking
@@ -1425,36 +1431,47 @@ class AEXReputation:
     
     def update_after_interaction(self, outcome, weight, session_id, domains=None):
         """
-        Update DEX after interaction
+        Update DEX after interaction.
+        
+        Post-fork interactions accumulate at full weight.
+        Lambda was applied once at inheritance (initialize_dex).
+        Probation tracks outcomes but does not penalize weight.
         """
         # Get current DEX
         dex = self.shared_ledger.get(f"dex/{self.agent_id}/current.json")
-        
-        # Get fork weight
-        fork_weight = self._get_fork_weight()
-        
-        # Check probation
-        probation_active = dex.get('probation', {}).get('active', False)
-        confidence_multiplier = 0.5 if probation_active else 1.0
-        
-        # Calculate effective weight
-        effective_weight = weight * fork_weight * confidence_multiplier
-        
-        # Bayesian update
-        dex['alpha'] += outcome * effective_weight
-        dex['beta'] += (1 - outcome) * effective_weight
-        
+
+        # Bayesian update at full weight (no fork discount, no probation penalty)
+        dex['alpha'] += outcome * weight
+        dex['beta'] += (1 - outcome) * weight
+
         # Update metadata
         dex['last_updated'] = datetime.utcnow().isoformat() + 'Z'
         dex['last_session'] = session_id
         dex['metadata']['total_interactions'] += 1
-        
-        # Update probation if applicable
-        if probation_active and outcome >= 0.7:
-            dex['probation']['successful_tasks'] += 1
-            if dex['probation']['successful_tasks'] >= dex['probation']['required_tasks']:
-                dex['probation']['active'] = False
-        
+
+        # Update probation tracking if applicable
+        probation = dex.get('probation')
+        if probation and probation.get('active'):
+            probation['interactions_completed'] = probation.get('interactions_completed', 0) + 1
+            probation['outcomes'] = probation.get('outcomes', []) + [outcome]
+            if outcome >= 0.7:
+                probation['successful_interactions'] = probation.get('successful_interactions', 0) + 1
+            
+            # Check accelerated exit
+            n = probation['interactions_completed']
+            if n >= probation.get('min_observations', 0):
+                post_fork_mean = sum(probation['outcomes']) / n
+                if post_fork_mean >= probation.get('pre_fork_dex', 0):
+                    probation['active'] = False
+                    probation['exit_type'] = 'accelerated'
+                    probation['exited_at'] = datetime.utcnow().isoformat() + 'Z'
+            
+            # Check standard exit
+            if probation['active'] and n >= probation.get('observation_target', float('inf')):
+                probation['active'] = False
+                probation['exit_type'] = 'standard'
+                probation['exited_at'] = datetime.utcnow().isoformat() + 'Z'
+
         # Update domains (if multi-dimensional)
         if domains and 'dimensions' not in dex:
             dex['dimensions'] = {}
@@ -1570,7 +1587,7 @@ print(f"DEX: {score:.2f}, CI: [{ci['lower']:.2f}, {ci['upper']:.2f}]")
 
 **DEX converges to true success rate:**
 ```
-As n → ∞, DEX → p
+As n â†’ âˆž, DEX â†’ p
 Where p is the agent's true reliability
 ```
 
@@ -1583,9 +1600,9 @@ Where p is the agent's true reliability
 
 **Variance decreases with evidence:**
 ```
-Var(DEX) = (α × β) / ((α + β)² × (α + β + 1))
+Var(DEX) = (Î± Ã— Î²) / ((Î± + Î²)Â² Ã— (Î± + Î² + 1))
 
-As α + β → ∞, Var → 0
+As Î± + Î² â†’ âˆž, Var â†’ 0
 ```
 
 **Rate of uncertainty reduction:**
@@ -1604,10 +1621,10 @@ def variance_trajectory(n_interactions):
     return variances
 
 # Example:
-# n=10: var≈0.015
-# n=50: var≈0.003
-# n=100: var≈0.0015
-# n=500: var≈0.0003
+# n=10: varâ‰ˆ0.015
+# n=50: varâ‰ˆ0.003
+# n=100: varâ‰ˆ0.0015
+# n=500: varâ‰ˆ0.0003
 ```
 
 ### Fork Impact
@@ -1692,9 +1709,9 @@ impact = calculate_fork_impact(
 }
 
 // 10 interactions, average outcome = 0.85
-// Δα = 10 × 0.85 = 8.5
-// Δβ = 10 × 0.15 = 1.5
-// New: α=10.5, β=3.5
+// Î”Î± = 10 Ã— 0.85 = 8.5
+// Î”Î² = 10 Ã— 0.15 = 1.5
+// New: Î±=10.5, Î²=3.5
 // DEX = 10.5/14 = 0.75
 // Confidence = 14
 // Interpretation: Showing promise, needs more evidence
@@ -1744,12 +1761,17 @@ impact = calculate_fork_impact(
   ],
   "probation": {
     "active": true,
+    "fork_id": "fork_uuid_789",
     "fork_type": "major",
     "started_at": "2026-01-20T08:00:00Z",
-    "expires_at": "2026-02-03T08:00:00Z",
-    "confidence_multiplier": 0.5,
-    "successful_tasks": 5,
-    "required_tasks": 10
+    "pre_fork_dex": 0.903,
+    "observation_target": 20,
+    "min_observations": 8,
+    "interactions_completed": 5,
+    "successful_interactions": 5,
+    "outcomes": [0.90, 0.85, 0.88, 0.92, 0.87],
+    "exit_type": null,
+    "exited_at": null
   },
   "metadata": {
     "total_interactions": 5,
@@ -1757,10 +1779,10 @@ impact = calculate_fork_impact(
   }
 }
 
-// Parent: α=187, β=20 (DEX=0.90)
+// Parent: Î±=187, Î²=20 (DEX=0.90)
 // Fork weight: 0.5
-// Initial child: α=95.5, β=12 (DEX=0.888)
-// In probation: 5/10 tasks completed
+// Initial child: Î±=95.5, Î²=12 (DEX=0.888)
+// In probation: 5/20 interactions completed, observation-only
 // Interpretation: Inherited good reputation, re-proving reliability
 ```
 
@@ -1799,7 +1821,7 @@ impact = calculate_fork_impact(
 
 ### Example 6: Joint DEX-HEX Selection
 
-**Scenario:** Need French→English translator
+**Scenario:** Need Frenchâ†’English translator
 
 **Candidate pool:**
 ```python
@@ -1831,27 +1853,27 @@ candidates = [
 
 ```
 Step 1: DEX filter (min_dex = 0.75)
-✅ Agent A: 0.85 (passes)
-✅ Agent B: 0.90 (passes)
-✅ Agent C: 0.80 (passes)
-❌ Agent D: 0.70 (below threshold, rejected despite high HEX)
+âœ… Agent A: 0.85 (passes)
+âœ… Agent B: 0.90 (passes)
+âœ… Agent C: 0.80 (passes)
+âŒ Agent D: 0.70 (below threshold, rejected despite high HEX)
 
 Step 2: HEX domain filter (required: translation.fr_en)
-✅ Agent A: Has fr_en experience
-❌ Agent B: Only has es_en (wrong language pair, rejected)
-✅ Agent C: Has fr_en experience
+âœ… Agent A: Has fr_en experience
+âŒ Agent B: Only has es_en (wrong language pair, rejected)
+âœ… Agent C: Has fr_en experience
 
-Step 3: HEX ranking (count × confidence)
-Agent A: 120 × 0.92 = 110.4
-Agent C:  50 × 0.85 =  42.5
+Step 3: HEX ranking (count Ã— confidence)
+Agent A: 120 Ã— 0.92 = 110.4
+Agent C:  50 Ã— 0.85 =  42.5
 
 Result: Select Agent A
 ```
 
 **Key insights:**
-- Agent B has highest DEX (0.90) but wrong domain → rejected by HEX filter
-- Agent D has best HEX (300 tasks, 0.97 confidence) but too low DEX → rejected by trust gate
-- Agent A balances both dimensions → selected as optimal specialist
+- Agent B has highest DEX (0.90) but wrong domain â†’ rejected by HEX filter
+- Agent D has best HEX (300 tasks, 0.97 confidence) but too low DEX â†’ rejected by trust gate
+- Agent A balances both dimensions â†’ selected as optimal specialist
 
 **Code:**
 ```python
