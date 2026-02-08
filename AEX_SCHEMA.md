@@ -13,7 +13,7 @@
 3. [AEX_ID Schemas](#aex_id-schemas)
 4. [AEX_REP Schemas](#aex_rep-schemas)
 5. [AEX_DEX Schemas](#aex_dex-schemas)
-6. [AEX_HEX Schemas](#aex_hex-schemas) ← **NEW**
+6. [AEX_HEX Schemas](#aex_hex-schemas) â† **NEW**
 7. [AEX_SESSION Schemas](#aex_session-schemas)
 8. [AEX_WITNESS Schemas](#aex_witness-schemas)
 9. [Handshake Schemas](#handshake-schemas)
@@ -30,7 +30,7 @@ This document provides **JSON Schema definitions** for all AEX protocol data str
 - **AEX_ID** - Identity and lineage
 - **AEX_REP** - Authority and delegation
 - **AEX_DEX** - Behavioral reliability
-- **AEX_HEX** - Experience and capability ← **NEW**
+- **AEX_HEX** - Experience and capability â† **NEW**
 
 **Purpose:**
 - Formal specification of data formats
@@ -259,7 +259,8 @@ This document provides **JSON Schema definitions** for all AEX protocol data str
     },
     "fork_type": {
       "type": "string",
-      "enum": ["bugfix", "major", "override", "custom"]
+      "enum": ["bugfix", "minor", "major", "override", "custom"],
+      "description": "Fork type determines maximum inheritance weight and probation observation window. bugfix=1.0/5, minor=0.8/10, major=0.5/20, override=0.1/50."
     },
     "claimed_weight": {
       "type": "number",
@@ -273,13 +274,15 @@ This document provides **JSON Schema definitions** for all AEX protocol data str
       "maximum": 1.0,
       "description": "Protocol-enforced weight based on fork_type"
     },
-    "probation_period": {
+    "observation_target": {
       "type": "integer",
       "minimum": 0,
-      "description": "Probation duration in seconds"
+      "description": "Probation observation window in number of completed interactions. See AEX_DEX Probation System for exit conditions."
     },
-    "probation_expires": {
-      "$ref": "#/$defs/timestamp"
+    "min_observations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Minimum interactions before accelerated exit assessment is allowed."
     },
     "timestamp": {
       "$ref": "#/$defs/timestamp"
@@ -552,24 +555,55 @@ This document provides **JSON Schema definitions** for all AEX protocol data str
           "type": "boolean",
           "default": false
         },
+        "fork_id": {
+          "$ref": "#/$defs/uuid"
+        },
         "fork_type": {
           "type": "string",
-          "enum": ["bugfix", "major", "override"]
+          "enum": ["bugfix", "minor", "major", "override"]
         },
         "started_at": {"$ref": "#/$defs/timestamp"},
-        "expires_at": {"$ref": "#/$defs/timestamp"},
-        "confidence_multiplier": {
+        "pre_fork_dex": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Parent DEX score at moment of fork. Baseline for accelerated exit."
         },
-        "successful_tasks": {
+        "observation_target": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total interactions required for standard probation exit."
+        },
+        "min_observations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum interactions before accelerated exit assessment."
+        },
+        "interactions_completed": {
           "type": "integer",
           "minimum": 0
         },
-        "required_tasks": {
+        "successful_interactions": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 0
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {"type": "number", "minimum": 0, "maximum": 1},
+          "description": "Recorded outcomes during probation window."
+        },
+        "exit_type": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "enum": ["accelerated", "standard"]}
+          ],
+          "description": "How probation ended. Null while active."
+        },
+        "exited_at": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/timestamp"}
+          ]
         }
       }
     },
@@ -899,7 +933,7 @@ This document provides **JSON Schema definitions** for all AEX protocol data str
           "confidence": {"$ref": "#/$defs/confidence"}
         }
       },
-      "description": "Top N domains by (count × confidence)"
+      "description": "Top N domains by (count Ã— confidence)"
     },
     "total_experience": {
       "type": "integer",
@@ -1495,9 +1529,9 @@ hex_obj = {
 # Validate HEX
 try:
     validate(instance=hex_obj, schema=hex_schema)
-    print("✓ HEX object is valid")
+    print("âœ“ HEX object is valid")
 except ValidationError as e:
-    print(f"✗ HEX validation error: {e.message}")
+    print(f"âœ— HEX validation error: {e.message}")
     print(f"  Failed at path: {' -> '.join(str(p) for p in e.path)}")
 
 # Example: Joint DEX-HEX selection
@@ -1535,7 +1569,7 @@ task_reqs = {
 
 agent_dex_params = {'alpha': 85, 'beta': 15}
 valid, reason = validate_agent_for_task(agent_dex_params, hex_obj, task_reqs)
-print(f"\nAgent selection: {'✓ Valid' if valid else '✗ Invalid'} - {reason}")
+print(f"\nAgent selection: {'âœ“ Valid' if valid else 'âœ— Invalid'} - {reason}")
 ```
 
 ### JavaScript Validation Example (with HEX)
@@ -1573,9 +1607,9 @@ const hexObject = {
 // Validate HEX
 const hexValid = validateHex(hexObject);
 if (hexValid) {
-  console.log("✓ HEX object is valid");
+  console.log("âœ“ HEX object is valid");
 } else {
-  console.log("✗ HEX validation errors:");
+  console.log("âœ— HEX validation errors:");
   validateHex.errors.forEach(err => {
     console.log(`  ${err.instancePath}: ${err.message}`);
   });
@@ -1604,7 +1638,7 @@ function selectAgent(candidates, taskRequirements) {
     return true;
   });
   
-  // Rank by HEX (count × confidence)
+  // Rank by HEX (count Ã— confidence)
   eligible.sort((a, b) => {
     const scoreA = a.hex.experience
       .filter(e => taskRequirements.requiredDomains.includes(e.domain))
@@ -1715,7 +1749,7 @@ https://aex-protocol.org/schemas/v1.0/dex_parameters.json
 ### 1. Always Validate Before Signing
 
 ```python
-# ✓ GOOD
+# âœ“ GOOD
 def create_hex(data):
     # Validate first
     validate(instance=data, schema=hex_schema)
@@ -1771,10 +1805,10 @@ def validate_agent_profile(identity, dex, hex_obj):
 def validate_with_logging(data, schema, schema_name):
     try:
         validate(instance=data, schema=schema)
-        logger.info(f"✓ {schema_name} validation passed")
+        logger.info(f"âœ“ {schema_name} validation passed")
         return True
     except ValidationError as e:
-        logger.error(f"✗ {schema_name} validation failed: {e.message}")
+        logger.error(f"âœ— {schema_name} validation failed: {e.message}")
         logger.error(f"  Path: {e.path}")
         logger.error(f"  Schema: {schema['$id']}")
         logger.error(f"  Data: {json.dumps(data, indent=2)}")
@@ -1785,18 +1819,18 @@ def validate_with_logging(data, schema, schema_name):
 
 ## Status
 
-**SCHEMAS.md COMPLETE ✓**
+**SCHEMAS.md COMPLETE âœ“**
 
 **All Primitives Covered:**
-1. ✓ AEX_ID - Identity and lineage
-2. ✓ AEX_REP - Authority and delegation
-3. ✓ AEX_DEX - Behavioral reliability
-4. ✓ AEX_HEX - Experience and capability ← **INTEGRATED**
-5. ✓ AEX_SESSION - Interaction records
-6. ✓ AEX_WITNESS - Third-party attestation
-7. ✓ Handshake - Protocol flow
-8. ✓ Ledger - Event storage
-9. ✓ Cross-primitive validation
+1. âœ“ AEX_ID - Identity and lineage
+2. âœ“ AEX_REP - Authority and delegation
+3. âœ“ AEX_DEX - Behavioral reliability
+4. âœ“ AEX_HEX - Experience and capability â† **INTEGRATED**
+5. âœ“ AEX_SESSION - Interaction records
+6. âœ“ AEX_WITNESS - Third-party attestation
+7. âœ“ Handshake - Protocol flow
+8. âœ“ Ledger - Event storage
+9. âœ“ Cross-primitive validation
 
 **Total Schemas:** 15+ formal JSON schemas  
 **Coverage:** Complete protocol with all four core primitives  
