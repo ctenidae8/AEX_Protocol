@@ -28,28 +28,28 @@
 
 AEX is designed as a **thin coordination substrate** for multi-agent systems. It provides:
 ```
-┌─────────────────────────────────────────────────┐
-│              Applications Layer                  │
-│  (Marketplaces, Workflows, Agent Networks)      │
-└─────────────────────────────────────────────────┘
-                       ▲
-                       │
-┌─────────────────────────────────────────────────┐
-│            AEX Protocol Layer                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ AEX_ID   │  │ AEX_REP  │  │ AEX_DEX  │  │ AEX_HEX  │ │
-│  │ Identity │  │Delegation│  │Reputation│  │Experience│ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-│  ┌──────────┐  ┌──────────┐                              │
-│  │AEX_SESSION│ │AEX_WITNESS│                             │
-│  └──────────┘  └──────────┘                              │
-└─────────────────────────────────────────────────┘
-                       ▲
-                       │
-┌─────────────────────────────────────────────────┐
-│          Infrastructure Layer                    │
-│  (Ledgers, Crypto Libraries, Networks)          │
-└─────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚              Applications Layer                  â”‚
+â”‚  (Marketplaces, Workflows, Agent Networks)      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â–²
+                       â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚            AEX Protocol Layer                    â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚  â”‚ AEX_ID   â”‚  â”‚ AEX_REP  â”‚  â”‚ AEX_DEX  â”‚  â”‚ AEX_HEX  â”‚ â”‚
+â”‚  â”‚ Identity â”‚  â”‚Delegationâ”‚  â”‚Reputationâ”‚  â”‚Experienceâ”‚ â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                              â”‚
+â”‚  â”‚AEX_SESSIONâ”‚ â”‚AEX_WITNESSâ”‚                             â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â–²
+                       â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚          Infrastructure Layer                    â”‚
+â”‚  (Ledgers, Crypto Libraries, Networks)          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Design Constraints
@@ -58,15 +58,15 @@ AEX is designed as a **thin coordination substrate** for multi-agent systems. It
 2. **Verifiability** - All claims are cryptographically signed
 3. **Portability** - Works across platforms, models, ecosystems
 4. **Optionality** - Core is mandatory, extensions are optional
-5. **Separation** - Protocol ≠ implementation ≠ marketplace
+5. **Separation** - Protocol â‰  implementation â‰  marketplace
 
 ### What AEX Is Not
 
-❌ An execution environment (agents run anywhere)  
-❌ A programming language (agents can be any architecture)  
-❌ A marketplace (though it enables them)  
-❌ A token (though it provides hooks for them)  
-❌ A consensus mechanism (though it requires shared ledgers)  
+âŒ An execution environment (agents run anywhere)  
+âŒ A programming language (agents can be any architecture)  
+âŒ A marketplace (though it enables them)  
+âŒ A token (though it provides hooks for them)  
+âŒ A consensus mechanism (though it requires shared ledgers)  
 
 ---
 
@@ -74,68 +74,68 @@ AEX is designed as a **thin coordination substrate** for multi-agent systems. It
 
 ### Four-Layer Stack
 ```
-┌─────────────────────────────────────────────┐
-│                 AEX_HEX                      │
-│          Experience & Capability             │
-│   "What kind of agent are you?"              │
-│                                              │
-│   • Domain-specific experience              │
-│   • Confidence scores                       │
-│   • Operational traits                      │
-│   • Capability signaling                    │
-└──────────────────┬──────────────────────────┘
-                   │ complements
-┌──────────────────▼──────────────────────────┐
-│                  AEX_DEX                     │
-│           Behavioral Reputation              │
-│   "How reliable is this agent?"              │
-│                                              │
-│   • Beta distribution (α, β)                │
-│   • Fork-aware weighting                    │
-│   • Confidence intervals                    │
-│   • Multi-dimensional (optional)            │
-└──────────────────┬──────────────────────────┘
-                   │ depends on
-┌──────────────────▼──────────────────────────┐
-│                 AEX_REP                      │
-│          Delegation & Authority              │
-│   "Who is this agent acting for?"            │
-│                                              │
-│   • Scoped permissions                      │
-│   • Time-bound (TTL)                        │
-│   • Revocable                               │
-│   • Constraint enforcement                  │
-└──────────────────┬──────────────────────────┘
-                   │ depends on
-┌──────────────────▼──────────────────────────┐
-│                 AEX_ID                       │
-│          Persistent Identity                 │
-│   "Who is this agent?"                       │
-│                                              │
-│   • Ed25519 keypair                         │
-│   • DID format                              │
-│   • Fork lineage                            │
-│   • Optional stake                          │
-└─────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                 AEX_HEX                      â”‚
+â”‚          Experience & Capability             â”‚
+â”‚   "What kind of agent are you?"              â”‚
+â”‚                                              â”‚
+â”‚   â€¢ Domain-specific experience              â”‚
+â”‚   â€¢ Confidence scores                       â”‚
+â”‚   â€¢ Operational traits                      â”‚
+â”‚   â€¢ Capability signaling                    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                   â”‚ complements
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                  AEX_DEX                     â”‚
+â”‚           Behavioral Reputation              â”‚
+â”‚   "How reliable is this agent?"              â”‚
+â”‚                                              â”‚
+â”‚   â€¢ Beta distribution (Î±, Î²)                â”‚
+â”‚   â€¢ Fork-aware weighting                    â”‚
+â”‚   â€¢ Confidence intervals                    â”‚
+â”‚   â€¢ Multi-dimensional (optional)            â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                   â”‚ depends on
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                 AEX_REP                      â”‚
+â”‚          Delegation & Authority              â”‚
+â”‚   "Who is this agent acting for?"            â”‚
+â”‚                                              â”‚
+â”‚   â€¢ Scoped permissions                      â”‚
+â”‚   â€¢ Time-bound (TTL)                        â”‚
+â”‚   â€¢ Revocable                               â”‚
+â”‚   â€¢ Constraint enforcement                  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                   â”‚ depends on
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                 AEX_ID                       â”‚
+â”‚          Persistent Identity                 â”‚
+â”‚   "Who is this agent?"                       â”‚
+â”‚                                              â”‚
+â”‚   â€¢ Ed25519 keypair                         â”‚
+â”‚   â€¢ DID format                              â”‚
+â”‚   â€¢ Fork lineage                            â”‚
+â”‚   â€¢ Optional stake                          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Cross-Cutting Concerns
 ```
-┌──────────────────────────────────────────────┐
-│             AEX_SESSION                       │
-│       Interaction Record & Binding            │
-│                                               │
-│   Links: ID + REP + DEX + HEX + Outcome      │
-│   Provides: Traceability, auditability       │
-└──────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚             AEX_SESSION                       â”‚
+â”‚       Interaction Record & Binding            â”‚
+â”‚                                               â”‚
+â”‚   Links: ID + REP + DEX + HEX + Outcome      â”‚
+â”‚   Provides: Traceability, auditability       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-┌──────────────────────────────────────────────┐
-│             AEX_WITNESS                       │
-│       Third-Party Attestation                 │
-│                                               │
-│   Stakes: Witness reputation on accuracy     │
-│   Provides: Dispute resolution, trust anchor │
-└──────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚             AEX_WITNESS                       â”‚
+â”‚       Third-Party Attestation                 â”‚
+â”‚                                               â”‚
+â”‚   Stakes: Witness reputation on accuracy     â”‚
+â”‚   Provides: Dispute resolution, trust anchor â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Layer Independence
@@ -163,7 +163,7 @@ Example: "Find the most reliable code generator"
 **AEX_ID + AEX_DEX + AEX_HEX:**
 ```
 Use case: Capability-aware agent selection
-Example: "Find the most experienced French→English translator"
+Example: "Find the most experienced Frenchâ†’English translator"
 ```
 
 **Full stack (ID + REP + DEX + HEX + SESSION + WITNESS):**
@@ -178,89 +178,89 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
 
 ### Typical Interaction Flow
 ```
-┌─────────┐                                    ┌─────────┐
-│ Agent A │                                    │ Agent B │
-└────┬────┘                                    └────┬────┘
-     │                                              │
-     │ 1. Generate/Load AEX_ID                     │
-     │    - Read keypair                           │
-     │    - Load fork lineage                      │
-     │    - Check probation status                 │
-     │                                              │
-     │ 2. Obtain AEX_REP (if delegated)            │
-     │    ┌──────────┐                             │
-     │◄───┤  Human   │                             │
-     │    └──────────┘                             │
-     │    - Receive signed delegation token        │
-     │    - Verify TTL, scope, constraints         │
-     │                                              │
-     │ 3. Handshake Initiation                     │
-     │    - Send AEX_ID                            │
-     │    - Send AEX_REP (if present)              │
-     │    - Send AEX_HEX summary                   │
-     │────────────────────────────────────────────>│
-     │                                              │
-     │                                      4. Verification
-     │                                      - Check signature
-     │                                      - Query shared ledger for DEX
-     │                                      - Evaluate: score, confidence
-     │                                      - Match HEX domains to task
-     │                                      - Check probation status
-     │                                      - Verify REP (if present)
-     │                                              │
-     │                              ┌───────────────▼──────────┐
-     │                              │   Shared Ledger          │
-     │                              │   - AEX_ID registry      │
-     │                              │   - DEX history          │
-     │                              │   - HEX corpus           │
-     │                              │   - Fork events          │
-     │                              │   - Session records      │
-     │                              └──────────────────────────┘
-     │                                              │
-     │ 5. Decision                                  │
-     │<────────────────────────────────────────────│
-     │    Accept: {session_id, constraints}        │
-     │    OR                                        │
-     │    Decline: {reason}                        │
-     │                                              │
-     │ 6. Task Execution                            │
-     │<───────────────────────────────────────────>│
-     │                                              │
-     │ 7. Outcome Signing                           │
-     │    Both sign: {session_id, outcome, weight} │
-     │<───────────────────────────────────────────>│
-     │                                              │
-     │ 8. Optional: Witness Attestation             │
-     │    ┌──────────┐                             │
-     │◄───┤ Witness  │────────────────────────────>│
-     │    └──────────┘                             │
-     │    - Witness signs outcome                  │
-     │    - Stakes own DEX on accuracy             │
-     │                                              │
-     │ 9. Publish to Shared Ledger                 │
-     │──────────────────────────────────────────┐  │
-     │                                          │  │
-     │                              ┌───────────▼──▼─────────┐
-     │                              │   Shared Ledger         │
-     │                              │   Append:               │
-     │                              │   - Session record      │
-     │                              │   - DEX updates (A & B) │
-     │                              │   - HEX updates (A & B) │
-     │                              │   - Witness attestation │
-     │                              └─────────────────────────┘
-     │                                              │
-     │ 10. HEX Update                               │
-     │     - Identify task domain(s)                │
-     │     - Increment experience count             │
-     │     - Update confidence based on outcome     │
-     │     - Sign and publish HEX update            │
-     │                                              │
-     │ 11. DEX Update                               │
-     │     - A: α += outcome × weight × fork_factor│
-     │          β += (1-outcome) × weight × ...    │
-     │     - B: α += (outcome_from_B's_view) × ... │
-     │          β += ...                           │
-     │                                              │
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”                                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A â”‚                                    â”‚ Agent B â”‚
+â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜                                    â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜
+     â”‚                                              â”‚
+     â”‚ 1. Generate/Load AEX_ID                     â”‚
+     â”‚    - Read keypair                           â”‚
+     â”‚    - Load fork lineage                      â”‚
+     â”‚    - Check probation status                 â”‚
+     â”‚                                              â”‚
+     â”‚ 2. Obtain AEX_REP (if delegated)            â”‚
+     â”‚    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                             â”‚
+     â”‚â—„â”€â”€â”€â”¤  Human   â”‚                             â”‚
+     â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                             â”‚
+     â”‚    - Receive signed delegation token        â”‚
+     â”‚    - Verify TTL, scope, constraints         â”‚
+     â”‚                                              â”‚
+     â”‚ 3. Handshake Initiation                     â”‚
+     â”‚    - Send AEX_ID                            â”‚
+     â”‚    - Send AEX_REP (if present)              â”‚
+     â”‚    - Send AEX_HEX summary                   â”‚
+     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€>â”‚
+     â”‚                                              â”‚
+     â”‚                                      4. Verification
+     â”‚                                      - Check signature
+     â”‚                                      - Query shared ledger for DEX
+     â”‚                                      - Evaluate: score, confidence
+     â”‚                                      - Match HEX domains to task
+     â”‚                                      - Check probation status
+     â”‚                                      - Verify REP (if present)
+     â”‚                                              â”‚
+     â”‚                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                              â”‚   Shared Ledger          â”‚
+     â”‚                              â”‚   - AEX_ID registry      â”‚
+     â”‚                              â”‚   - DEX history          â”‚
+     â”‚                              â”‚   - HEX corpus           â”‚
+     â”‚                              â”‚   - Fork events          â”‚
+     â”‚                              â”‚   - Session records      â”‚
+     â”‚                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚                                              â”‚
+     â”‚ 5. Decision                                  â”‚
+     â”‚<â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚
+     â”‚    Accept: {session_id, constraints}        â”‚
+     â”‚    OR                                        â”‚
+     â”‚    Decline: {reason}                        â”‚
+     â”‚                                              â”‚
+     â”‚ 6. Task Execution                            â”‚
+     â”‚<â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€>â”‚
+     â”‚                                              â”‚
+     â”‚ 7. Outcome Signing                           â”‚
+     â”‚    Both sign: {session_id, outcome, weight} â”‚
+     â”‚<â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€>â”‚
+     â”‚                                              â”‚
+     â”‚ 8. Optional: Witness Attestation             â”‚
+     â”‚    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                             â”‚
+     â”‚â—„â”€â”€â”€â”¤ Witness  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€>â”‚
+     â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                             â”‚
+     â”‚    - Witness signs outcome                  â”‚
+     â”‚    - Stakes own DEX on accuracy             â”‚
+     â”‚                                              â”‚
+     â”‚ 9. Publish to Shared Ledger                 â”‚
+     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+     â”‚                                          â”‚  â”‚
+     â”‚                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                              â”‚   Shared Ledger         â”‚
+     â”‚                              â”‚   Append:               â”‚
+     â”‚                              â”‚   - Session record      â”‚
+     â”‚                              â”‚   - DEX updates (A & B) â”‚
+     â”‚                              â”‚   - HEX updates (A & B) â”‚
+     â”‚                              â”‚   - Witness attestation â”‚
+     â”‚                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚                                              â”‚
+     â”‚ 10. HEX Update                               â”‚
+     â”‚     - Identify task domain(s)                â”‚
+     â”‚     - Increment experience count             â”‚
+     â”‚     - Update confidence based on outcome     â”‚
+     â”‚     - Sign and publish HEX update            â”‚
+     â”‚                                              â”‚
+     â”‚ 11. DEX Update                               â”‚
+     â”‚     - A: Î± += outcome Ã— weight Ã— fork_factorâ”‚
+     â”‚          Î² += (1-outcome) Ã— weight Ã— ...    â”‚
+     â”‚     - B: Î± += (outcome_from_B's_view) Ã— ... â”‚
+     â”‚          Î² += ...                           â”‚
+     â”‚                                              â”‚
 ```
 
 ### HEX Accumulation Flow
@@ -268,45 +268,45 @@ Example: "Hire agent to negotiate $100K contract on my behalf"
 HEX (experience corpus) accumulates through completed interactions:
 
 ```
-┌─────────┐
-│ Agent A │  HEX: {gardening.irrigation: count=35}
-└────┬────┘
-     │
-     │ Complete irrigation task
-     │ DEX outcome: success (1.0)
-     │
-     ▼
-┌─────────────────────────────────────────┐
-│  HEX Update                              │
-│  - domain: "gardening.irrigation"       │
-│  - count: 35 → 36                       │
-│  - confidence: recalculated             │
-│  - last_updated: timestamp              │
-│  - signature: sign(update)              │
-└─────────────────────────────────────────┘
-     │
-     ▼
-┌─────────┐
-│ Agent A │  HEX: {gardening.irrigation: count=36, confidence=0.92}
-└─────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A â”‚  HEX: {gardening.irrigation: count=35}
+â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜
+     â”‚
+     â”‚ Complete irrigation task
+     â”‚ DEX outcome: success (1.0)
+     â”‚
+     â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  HEX Update                              â”‚
+â”‚  - domain: "gardening.irrigation"       â”‚
+â”‚  - count: 35 â†’ 36                       â”‚
+â”‚  - confidence: recalculated             â”‚
+â”‚  - last_updated: timestamp              â”‚
+â”‚  - signature: sign(update)              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚
+     â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A â”‚  HEX: {gardening.irrigation: count=36, confidence=0.92}
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **HEX in Agent Selection:**
 
 ```
-Task: "Need French→English translation"
+Task: "Need Frenchâ†’English translation"
 
 Candidate Pool:
-┌─────────────────────────────────────────────────┐
-│ Agent 1: DEX=0.85, HEX: {translation.fr_en: 120}│  ← SELECTED
-│ Agent 2: DEX=0.90, HEX: {translation.es_en: 200}│
-│ Agent 3: DEX=0.88, HEX: {summarization: 300}    │
-└─────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent 1: DEX=0.85, HEX: {translation.fr_en: 120}â”‚  â† SELECTED
+â”‚ Agent 2: DEX=0.90, HEX: {translation.es_en: 200}â”‚
+â”‚ Agent 3: DEX=0.88, HEX: {summarization: 300}    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 Selection logic:
 1. Filter: DEX > 0.80 (trust threshold)
 2. Filter: Has domain "translation.fr_en"
-3. Rank: By (count × confidence × recency)
+3. Rank: By (count Ã— confidence Ã— recency)
 4. Select: Agent 1
 ```
 
@@ -317,39 +317,39 @@ Selection logic:
 
 ### Fork Event Flow
 ```
-┌─────────┐
-│ Agent A │  (α=50, β=10, DEX=0.83)
-└────┬────┘
-     │
-     │ Major model update
-     │
-     ▼
-┌─────────────┐
-│  Fork Event │
-│  - Type: major
-│  - Weight: 0.5 (enforced)
-│  - Probation: 14 days
-└──────┬──────┘
-       │
-       ▼
-┌─────────┐
-│ Agent A'│  (α'=25, β'=5, DEX=0.83, confidence halved)
-└────┬────┘
-     │
-     │ Probation period active
-     │ - All interactions count at 0.5× weight
-     │ - Must complete 10 successful tasks OR wait 14 days
-     │
-     ▼
-┌─────────────┐
-│ 10 tasks @  │
-│ outcome≥0.7 │
-└──────┬──────┘
-       │
-       ▼
-┌─────────┐
-│ Agent A'│  (Probation ended, normal weighting restored)
-└─────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A â”‚  (Î±=50, Î²=10, DEX=0.83)
+â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜
+     â”‚
+     â”‚ Major model update
+     â”‚
+     â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Fork Event â”‚
+â”‚  - Type: major
+â”‚  - Weight: 0.5 (enforced)
+â”‚  - Probation: 14 days
+â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜
+       â”‚
+       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A'â”‚  (Î±'=25, Î²'=5, DEX=0.83, confidence halved)
+â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜
+     â”‚
+     â”‚ Probation period active
+     â”‚ - All interactions count at 0.5Ã— weight
+     â”‚ - Must complete 10 successful tasks OR wait 14 days
+     â”‚
+     â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ 10 tasks @  â”‚
+â”‚ outcomeâ‰¥0.7 â”‚
+â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜
+       â”‚
+       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Agent A'â”‚  (Probation ended, normal weighting restored)
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -360,73 +360,73 @@ Selection logic:
 
 AEX models trust across four dimensions:
 ```
-┌──────────────────────────────────────────┐
-│           Identity Trust                  │
-│   "Is this really who they claim?"       │
-│                                           │
-│   Provided by: Ed25519 signatures        │
-│   Verified via: Public key cryptography  │
-│   Threat: Key theft, impersonation       │
-└──────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚           Identity Trust                  â”‚
+â”‚   "Is this really who they claim?"       â”‚
+â”‚                                           â”‚
+â”‚   Provided by: Ed25519 signatures        â”‚
+â”‚   Verified via: Public key cryptography  â”‚
+â”‚   Threat: Key theft, impersonation       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                   +
-┌──────────────────────────────────────────┐
-│         Authority Trust                   │
-│   "Are they allowed to do this?"         │
-│                                           │
-│   Provided by: AEX_REP tokens            │
-│   Verified via: Signature + scope check  │
-│   Threat: Token theft, scope violation   │
-└──────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚         Authority Trust                   â”‚
+â”‚   "Are they allowed to do this?"         â”‚
+â”‚                                           â”‚
+â”‚   Provided by: AEX_REP tokens            â”‚
+â”‚   Verified via: Signature + scope check  â”‚
+â”‚   Threat: Token theft, scope violation   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                   +
-┌──────────────────────────────────────────┐
-│        Behavioral Trust                   │
-│   "Will they perform well?"              │
-│                                           │
-│   Provided by: DEX history               │
-│   Verified via: Shared ledger            │
-│   Threat: Reputation farming, defection  │
-└──────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚        Behavioral Trust                   â”‚
+â”‚   "Will they perform well?"              â”‚
+â”‚                                           â”‚
+â”‚   Provided by: DEX history               â”‚
+â”‚   Verified via: Shared ledger            â”‚
+â”‚   Threat: Reputation farming, defection  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                   +
-┌──────────────────────────────────────────┐
-│        Capability Trust                   │
-│   "Are they the right specialist?"       │
-│                                           │
-│   Provided by: HEX experience corpus     │
-│   Verified via: Domain matching, ledger  │
-│   Threat: Experience inflation, mismatch │
-└──────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚        Capability Trust                   â”‚
+â”‚   "Are they the right specialist?"       â”‚
+â”‚                                           â”‚
+â”‚   Provided by: HEX experience corpus     â”‚
+â”‚   Verified via: Domain matching, ledger  â”‚
+â”‚   Threat: Experience inflation, mismatch â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Trust Establishment
 ```
 New Agent
-   │
-   │ Step 1: Identity established
-   ├─> AEX_ID created
-   │   - Ed25519 keypair generated
-   │   - DID published
-   │   - Signature verified
-   │
-   │ Step 2: Initial reputation
-   ├─> DEX initialized (α=2, β=2)
-   │   - Score: 0.5 (neutral)
-   │   - Confidence: 4 (very low)
-   │   - Result: Few will trust initially
-   │
-   │ Step 3: Bootstrap interactions
-   ├─> Low-stakes tasks
-   │   - Human-in-transaction vouching
-   │   - Low-value work
-   │   - Gradual reputation building
-   │
-   │ Step 4: Reputation accumulation
-   ├─> ~50 successful interactions
-   │   - DEX → 0.8+
-   │   - Confidence → 50+
-   │   - Result: Trustworthy for medium-stakes
-   │
-   │ Step 5: Optional stake
-   └─> Post economic bond
+   â”‚
+   â”‚ Step 1: Identity established
+   â”œâ”€> AEX_ID created
+   â”‚   - Ed25519 keypair generated
+   â”‚   - DID published
+   â”‚   - Signature verified
+   â”‚
+   â”‚ Step 2: Initial reputation
+   â”œâ”€> DEX initialized (Î±=2, Î²=2)
+   â”‚   - Score: 0.5 (neutral)
+   â”‚   - Confidence: 4 (very low)
+   â”‚   - Result: Few will trust initially
+   â”‚
+   â”‚ Step 3: Bootstrap interactions
+   â”œâ”€> Low-stakes tasks
+   â”‚   - Human-in-transaction vouching
+   â”‚   - Low-value work
+   â”‚   - Gradual reputation building
+   â”‚
+   â”‚ Step 4: Reputation accumulation
+   â”œâ”€> ~50 successful interactions
+   â”‚   - DEX â†’ 0.8+
+   â”‚   - Confidence â†’ 50+
+   â”‚   - Result: Trustworthy for medium-stakes
+   â”‚
+   â”‚ Step 5: Optional stake
+   â””â”€> Post economic bond
        - Signals long-term commitment
        - Qualifies for high-value work
        - Creates irreversible cost for fraud
@@ -436,17 +436,17 @@ New Agent
 
 **Implicit decay (through probation):**
 ```
-Fork event → Probation → Confidence penalty → Must re-prove
+Fork event â†’ Probation â†’ Confidence penalty â†’ Must re-prove
 ```
 
 **Explicit decay (through outcomes):**
 ```
-Bad outcome → β increases → DEX drops → Fewer opportunities
+Bad outcome â†’ Î² increases â†’ DEX drops â†’ Fewer opportunities
 ```
 
 **Stake-based decay (optional):**
 ```
-Poor performance → Stake slashing conditions met → Stake lost
+Poor performance â†’ Stake slashing conditions met â†’ Stake lost
 ```
 
 ---
@@ -511,10 +511,10 @@ did:aex:<base58(public_key)>
 **Example:**
 ```
 did:aex:5Z7XR8pN3kY1mW9vQ4fT6hL2sJ8cB3nE9xA1dK7pR4wM
-│   │   │
-│   │   └─ Base58-encoded Ed25519 public key (32 bytes → ~44 chars)
-│   └───── Method name
-└───────── DID scheme
+â”‚   â”‚   â”‚
+â”‚   â”‚   â””â”€ Base58-encoded Ed25519 public key (32 bytes â†’ ~44 chars)
+â”‚   â””â”€â”€â”€â”€â”€ Method name
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€ DID scheme
 ```
 
 **Properties:**
@@ -558,11 +558,16 @@ Output: {"agent_id":"did:aex:...","alpha":2.0,"beta":2.0}
 
 ### Fork Types (Protocol-Enforced)
 
-| Type | Description | Weight | Probation | Use Case |
-|------|-------------|--------|-----------|----------|
-| **Bugfix** | Minor correction, no architectural change | 1.0 | 7 days | Security patch, typo fix |
-| **Major** | Significant change, partial continuity | 0.5 | 14 days | Model upgrade, feature rewrite |
-| **Override** | External authorship, minimal continuity | 0.1 | 30 days | Platform migration, complete rewrite |
+| Type | Description | Weight (λ) | Probation (interactions) | Use Case |
+|------|-------------|-----------|--------------------------|----------|
+| **Bugfix** | Minor correction, no architectural change | 1.0 | 5 | Security patch, typo fix |
+| **Minor** | Small functional change, high continuity | 0.8 | 10 | Prompt update, skill addition, dependency bump |
+| **Major** | Significant change, partial continuity | 0.5 | 20 | Model version upgrade, architecture change |
+| **Override** | External authorship, minimal continuity | 0.1 | 50 | Platform migration, complete rewrite |
+
+**Probation model:** Probation is measured in completed interactions, not calendar days. During probation, all interactions accumulate at full weight -- probation is an observation window, not a penalty. See AEX_DEX Probation System for exit conditions.
+
+**Lambda applies once:** The fork weight lambda is applied at inheritance to discount the parent's history. Post-fork interactions are the child's own evidence and accumulate at full weight (lambda=1.0). See AEX_DEX Fork-Aware Weighting.
 
 ### Fork Weight Enforcement
 ```python
@@ -572,10 +577,14 @@ def enforce_fork_weight(claimed_weight, fork_type):
     Agents can claim lower, never higher.
     """
     max_weights = {
-        'bugfix': 1.0,
-        'major': 0.5,
+        'bugfix':   1.0,
+        'minor':    0.8,
+        'major':    0.5,
         'override': 0.1
     }
+    
+    if fork_type not in max_weights:
+        raise ProtocolViolation(f"Unknown fork type: {fork_type}")
     
     max_allowed = max_weights[fork_type]
     
@@ -590,90 +599,117 @@ def enforce_fork_weight(claimed_weight, fork_type):
 
 ### Lineage Calculation
 ```python
-def calculate_dex_from_lineage(parent_dex, fork_event):
+def calculate_child_dex(parent_dex, fork_event):
     """
-    When agent forks, child inherits weighted DEX
+    When agent forks, child inherits weighted DEX.
+    
+    Lambda is applied HERE -- once -- to discount the parent's history.
+    The child's post-fork interactions will accumulate at full weight.
     """
     parent_alpha = parent_dex['alpha']
     parent_beta = parent_dex['beta']
     fork_weight = fork_event['enforced_weight']
     
-    # Apply fork weight to parent's evidence
-    child_alpha = parent_alpha * fork_weight
-    child_beta = parent_beta * fork_weight
+    # Apply fork weight to parent's evidence (ONE TIME)
+    child_alpha = parent_alpha * fork_weight + 2.0
+    child_beta = parent_beta * fork_weight + 2.0
     
-    # Add neutral prior to avoid zero-confidence forks
-    child_alpha += 2.0
-    child_beta += 2.0
+    # Record parent DEX as baseline for probation assessment
+    parent_score = parent_alpha / (parent_alpha + parent_beta)
+    
+    # Determine probation parameters by fork type
+    probation_params = {
+        'bugfix':   {'observation_target': 5,  'min_observations': 3},
+        'minor':    {'observation_target': 10, 'min_observations': 5},
+        'major':    {'observation_target': 20, 'min_observations': 8},
+        'override': {'observation_target': 50, 'min_observations': 15}
+    }
+    
+    params = probation_params[fork_event['fork_type']]
     
     return {
         'alpha': child_alpha,
         'beta': child_beta,
         'probation': {
             'active': True,
-            'expires': fork_event['probation_expires'],
-            'confidence_multiplier': 0.5
+            'fork_id': fork_event['fork_id'],
+            'fork_type': fork_event['fork_type'],
+            'started_at': fork_event['timestamp'],
+            'pre_fork_dex': parent_score,
+            'observation_target': params['observation_target'],
+            'min_observations': params['min_observations'],
+            'interactions_completed': 0,
+            'successful_interactions': 0,
+            'outcomes': [],
+            'exit_type': None,
+            'exited_at': None
         }
     }
 ```
 
 **Example:**
 ```
-Parent: α=50, β=10 (DEX=0.833, confidence=60)
+Parent: alpha=50, beta=10 (DEX=0.833, confidence=60)
+
+Fork (type=minor, weight=0.8):
+  Child_alpha = 50 * 0.8 + 2 = 42
+  Child_beta = 10 * 0.8 + 2 = 10
+  Child_DEX = 42/(42+10) = 0.808
+  Child_confidence = 52
+  Probation: observation-only, 10 interactions, accelerated exit if mean >= 0.833
 
 Fork (type=major, weight=0.5):
-  Child_α = 50 × 0.5 + 2 = 27
-  Child_β = 10 × 0.5 + 2 = 7
+  Child_alpha = 50 * 0.5 + 2 = 27
+  Child_beta = 10 * 0.5 + 2 = 7
   Child_DEX = 27/(27+7) = 0.794
   Child_confidence = 34
+  Probation: observation-only, 20 interactions, accelerated exit if mean >= 0.833
 
-Result: DEX slightly lowered, confidence halved
+Post-fork: all new interactions accrue at full weight (lambda=1.0).
 ```
 
 ### Probation Mechanics
+
+Probation is an observation window. It does NOT modify interaction weight.
+
 ```python
-def update_dex_during_probation(dex, outcome, weight):
+def process_interaction_during_probation(dex, outcome, weight, session_id):
     """
-    During probation, confidence penalty applies
+    After each interaction, update DEX at full weight AND track probation.
     """
-    if dex['probation']['active']:
-        confidence_multiplier = dex['probation']['confidence_multiplier']
-        effective_weight = weight * confidence_multiplier
-    else:
-        effective_weight = weight
+    # Step 1: Standard DEX update -- full weight, no fork discount
+    dex['alpha'] += outcome * weight
+    dex['beta'] += (1 - outcome) * weight
     
-    # Standard Bayesian update with adjusted weight
-    dex['alpha'] += outcome * effective_weight
-    dex['beta'] += (1 - outcome) * effective_weight
-    
-    # Check probation exit conditions
-    check_probation_exit(dex)
+    # Step 2: Track probation
+    if dex['probation'] and dex['probation']['active']:
+        probation = dex['probation']
+        probation['interactions_completed'] += 1
+        probation['outcomes'].append(outcome)
+        
+        if outcome >= 0.7:
+            probation['successful_interactions'] += 1
+        
+        # Check accelerated exit
+        n = probation['interactions_completed']
+        if n >= probation['min_observations']:
+            post_fork_mean = sum(probation['outcomes']) / n
+            if post_fork_mean >= probation['pre_fork_dex']:
+                probation['active'] = False
+                probation['exit_type'] = 'accelerated'
+                probation['exited_at'] = now()
+        
+        # Check standard exit
+        if probation['active'] and n >= probation['observation_target']:
+            probation['active'] = False
+            probation['exit_type'] = 'standard'
+            probation['exited_at'] = now()
     
     return dex
-
-def check_probation_exit(dex):
-    """
-    Probation ends when:
-    1. Time expires, OR
-    2. 10 successful interactions (outcome ≥ 0.7)
-    """
-    if not dex['probation']['active']:
-        return
-    
-    # Condition 1: Time
-    if now() > dex['probation']['expires']:
-        dex['probation']['active'] = False
-        return
-    
-    # Condition 2: Performance
-    # Count recent successful interactions
-    recent_successes = count_recent_high_outcomes(dex, threshold=0.7)
-    if recent_successes >= 10:
-        dex['probation']['active'] = False
-        return
 ```
 
 ---
+
 
 ## Witness Architecture
 
@@ -789,7 +825,7 @@ def compute_witness_consensus(attestations, threshold=0.75):
 ```
 Witness A: outcome = 0.85
 Witness B: outcome = 0.88
-Witness C: outcome = 0.40  ← Outlier (> 0.3 from median 0.865)
+Witness C: outcome = 0.40  â† Outlier (> 0.3 from median 0.865)
 
 Median: 0.865
 Inliers: [0.85, 0.88]
@@ -805,7 +841,7 @@ def penalize_false_witness(witness_did, session_id, dispute_severity):
     """
     When witness attestation is later found false, penalize their DEX
     
-    dispute_severity ∈ [0, 1]:
+    dispute_severity âˆˆ [0, 1]:
       0.0 = minor disagreement
       0.5 = significant error
       1.0 = deliberate falsehood
@@ -834,11 +870,11 @@ def penalize_false_witness(witness_did, session_id, dispute_severity):
     return witness_dex
 
 # Example impact:
-# Before: α=87, β=13 (DEX=0.870)
-# Dispute at severity=0.8: β += 1.6
-# After:  α=87, β=14.6 (DEX=0.856)
+# Before: Î±=87, Î²=13 (DEX=0.870)
+# Dispute at severity=0.8: Î² += 1.6
+# After:  Î±=87, Î²=14.6 (DEX=0.856)
 # 
-# Multiple false attestations → witness becomes untrusted
+# Multiple false attestations â†’ witness becomes untrusted
 ```
 
 ---
@@ -901,7 +937,7 @@ class IdentityStake:
 **Market impact:**
 ```
 High-value task ($10,000):
-- Requires stake ≥ $5,000
+- Requires stake â‰¥ $5,000
 - Filters participants to:
   a) Staked agents (proven commitment)
   b) High-DEX agents willing to work without stake (reputation value > $5K)
@@ -967,13 +1003,13 @@ class SessionBond:
 **Outcomes:**
 ```
 Scenario A: outcome=0.9, 2 witnesses agree
-→ Bond released to agent
+â†’ Bond released to agent
 
 Scenario B: outcome=0.6, 2 witnesses agree
-→ Bond slashed, distributed per escrow rules
+â†’ Bond slashed, distributed per escrow rules
 
 Scenario C: outcome=0.9, but dispute filed within window
-→ Bond held until arbitration complete
+â†’ Bond held until arbitration complete
 ```
 
 ---
@@ -1014,31 +1050,31 @@ Option D: Hybrid (local + periodic IPFS checkpoints)
 ```
 Shared Ledger Structure:
 /
-├── identities/
-│   └── {did:aex:...}/
-│       ├── aex_id.json
-│       ├── fork_events/
-│       │   ├── {fork_id_1}.json
-│       │   └── {fork_id_2}.json
-│       └── stake.json (optional)
-│
-├── dex/
-│   └── {did:aex:...}/
-│       ├── current.json
-│       └── history/
-│           ├── {timestamp_1}.json
-│           └── {timestamp_2}.json
-│
-├── sessions/
-│   └── {session_id}/
-│       ├── session.json
-│       ├── witnesses/
-│       │   ├── {witness_1}.json
-│       │   └── {witness_2}.json
-│       └── bond.json (optional)
-│
-└── disputes/
-    └── {dispute_id}.json
+â”œâ”€â”€ identities/
+â”‚   â””â”€â”€ {did:aex:...}/
+â”‚       â”œâ”€â”€ aex_id.json
+â”‚       â”œâ”€â”€ fork_events/
+â”‚       â”‚   â”œâ”€â”€ {fork_id_1}.json
+â”‚       â”‚   â””â”€â”€ {fork_id_2}.json
+â”‚       â””â”€â”€ stake.json (optional)
+â”‚
+â”œâ”€â”€ dex/
+â”‚   â””â”€â”€ {did:aex:...}/
+â”‚       â”œâ”€â”€ current.json
+â”‚       â””â”€â”€ history/
+â”‚           â”œâ”€â”€ {timestamp_1}.json
+â”‚           â””â”€â”€ {timestamp_2}.json
+â”‚
+â”œâ”€â”€ sessions/
+â”‚   â””â”€â”€ {session_id}/
+â”‚       â”œâ”€â”€ session.json
+â”‚       â”œâ”€â”€ witnesses/
+â”‚       â”‚   â”œâ”€â”€ {witness_1}.json
+â”‚       â”‚   â””â”€â”€ {witness_2}.json
+â”‚       â””â”€â”€ bond.json (optional)
+â”‚
+â””â”€â”€ disputes/
+    â””â”€â”€ {dispute_id}.json
 ```
 
 ### Local Ledger (Optional but Recommended)
@@ -1047,23 +1083,23 @@ Shared Ledger Structure:
 ```
 Local Ledger Structure:
 /
-├── my_identity/
-│   ├── private_key
-│   └── aex_id.json
-│
-├── trusted_agents/
-│   └── {did:aex:...}/
-│       ├── cached_dex.json
-│       ├── notes.txt
-│       └── override_trust_score (optional)
-│
-├── blocklist/
-│   └── {did:aex:...}.json
-│
-└── delegation_tokens/
-    └── {rep_id}/
-        ├── token.json
-        └── refresh_schedule.json
+â”œâ”€â”€ my_identity/
+â”‚   â”œâ”€â”€ private_key
+â”‚   â””â”€â”€ aex_id.json
+â”‚
+â”œâ”€â”€ trusted_agents/
+â”‚   â””â”€â”€ {did:aex:...}/
+â”‚       â”œâ”€â”€ cached_dex.json
+â”‚       â”œâ”€â”€ notes.txt
+â”‚       â””â”€â”€ override_trust_score (optional)
+â”‚
+â”œâ”€â”€ blocklist/
+â”‚   â””â”€â”€ {did:aex:...}.json
+â”‚
+â””â”€â”€ delegation_tokens/
+    â””â”€â”€ {rep_id}/
+        â”œâ”€â”€ token.json
+        â””â”€â”€ refresh_schedule.json
 ```
 
 ### Query Patterns
@@ -1142,19 +1178,19 @@ def get_witness_history(witness_did, participant_did, limit=100):
 
 **Trade-off:** Less flexibility, but flexibility creates security risks
 
-### Why α=2, β=2 (not α=1, β=1)?
+### Why Î±=2, Î²=2 (not Î±=1, Î²=1)?
 
-**Decision:** Initialize DEX at α=2, β=2
+**Decision:** Initialize DEX at Î±=2, Î²=2
 
 **Rationale:**
 ```
-α=1, β=1:
+Î±=1, Î²=1:
 - Score: 0.5
 - Confidence: 2 (extremely low)
 - Variance: 0.083 (very high)
 - Problem: First interaction dominates
 
-α=2, β=2:
+Î±=2, Î²=2:
 - Score: 0.5 (same)
 - Confidence: 4 (low but not extreme)
 - Variance: 0.05 (more stable)
@@ -1163,20 +1199,20 @@ def get_witness_history(witness_did, participant_did, limit=100):
 
 **Example impact:**
 ```
-Agent with α=1, β=1:
+Agent with Î±=1, Î²=1:
 - First task: outcome=0.0 (complete failure)
-- New state: α=1, β=2 → DEX=0.33
+- New state: Î±=1, Î²=2 â†’ DEX=0.33
 - Reputation destroyed instantly
 
-Agent with α=2, β=2:
+Agent with Î±=2, Î²=2:
 - First task: outcome=0.0
-- New state: α=2, β=3 → DEX=0.40
+- New state: Î±=2, Î²=3 â†’ DEX=0.40
 - Still low, but not catastrophic
 ```
 
 ### Why Continuous Outcomes (not discrete)?
 
-**Decision:** Outcomes ∈ [0, 1]
+**Decision:** Outcomes âˆˆ [0, 1]
 
 **Rationale:**
 - **Nuance:** Tasks rarely pure success/failure
@@ -1253,7 +1289,7 @@ def check_rep_validity(rep_token):
 
 **Scenario:**
 ```
-Task: "Need French→English translation"
+Task: "Need Frenchâ†’English translation"
 
 Agent A: DEX=0.90, 200 successful tasks... in gardening
 Agent B: DEX=0.85, 150 successful tasks... in translation.fr_en
@@ -1296,9 +1332,9 @@ DEX: "Can I trust you?" (binary gate)
 HEX: "Are you best for this?" (ranking function)
 
 Selection flow:
-1. Filter by DEX > threshold → "trustworthy pool"
-2. Filter by HEX domain match → "capable pool"
-3. Rank by (count × confidence × recency) → "best specialist"
+1. Filter by DEX > threshold â†’ "trustworthy pool"
+2. Filter by HEX domain match â†’ "capable pool"
+3. Rank by (count Ã— confidence Ã— recency) â†’ "best specialist"
 ```
 
 **Example with joint selection:**
@@ -1339,7 +1375,7 @@ def select_agent(candidates, task):
 **Recovery:**
 ```
 1. Original owner creates new AEX_ID
-2. Publishes fork event linking old → new
+2. Publishes fork event linking old â†’ new
 3. Marks old identity as "compromised"
 4. Optionally transfers partial DEX (e.g., 0.3 weight)
 5. Requires re-proving reliability
@@ -1357,10 +1393,10 @@ def select_agent(candidates, task):
 **Attack:**
 ```
 Agent A (DEX=0.9)
-  ├─> Fork B (claims weight=0.5)
-  ├─> Fork C (claims weight=0.5)
-  ├─> Fork D (claims weight=0.5)
-  └─> ... (repeat)
+  â”œâ”€> Fork B (claims weight=0.5)
+  â”œâ”€> Fork C (claims weight=0.5)
+  â”œâ”€> Fork D (claims weight=0.5)
+  â””â”€> ... (repeat)
 
 Goal: Create many "fresh" identities with partial reputation
 ```
@@ -1496,7 +1532,7 @@ def check_task_difficulty_bias(agent_did):
 
 **Scenario:**
 ```
-Agent has α=10, β=40 (DEX=0.2)
+Agent has Î±=10, Î²=40 (DEX=0.2)
 - No one will work with them
 - Can't get new interactions to rebuild
 - Effectively "reputation bankrupt"
@@ -1617,7 +1653,7 @@ def should_accept_agent(agent):
 
 **Challenge:** Every handshake requires shared ledger query
 ```
-100,000 agents × 10 interactions/day = 1M queries/day
+100,000 agents Ã— 10 interactions/day = 1M queries/day
 ```
 
 **Mitigations:**
@@ -1651,7 +1687,7 @@ Deploy read replicas at edge
 
 **Challenge:** Append-only ledger grows unbounded
 ```
-1M agents × 100 interactions each = 100M session records
+1M agents Ã— 100 interactions each = 100M session records
 Average record size: 2KB
 Total: ~200GB
 ```
@@ -1683,7 +1719,7 @@ Total: ~200GB
 
 **Challenge:** Selecting N witnesses from large pool
 ```
-1M eligible witnesses × 1K sessions/sec = 1B selection operations/sec
+1M eligible witnesses Ã— 1K sessions/sec = 1B selection operations/sec
 ```
 
 **Optimization:**
@@ -1696,7 +1732,7 @@ def maintain_witness_tiers():
     all_witnesses = get_all_agents()
     
     tiers = {
-        'tier_1': [],  # DEX ≥ 0.9
+        'tier_1': [],  # DEX â‰¥ 0.9
         'tier_2': [],  # DEX 0.8-0.9
         'tier_3': [],  # DEX 0.7-0.8
     }
@@ -1764,7 +1800,7 @@ Experienced agent (2 years active):
 - Average: 20 interactions per domain
 - HEX size: ~5KB per agent
 
-1M agents × 5KB = 5GB total HEX storage
+1M agents Ã— 5KB = 5GB total HEX storage
 ```
 
 **Mitigations:**
@@ -1779,7 +1815,7 @@ def prune_hex_corpus(hex_corpus, min_count=5, max_domains=50):
     significant = [e for e in hex_corpus['experience'] 
                    if e['count'] >= min_count]
     
-    # Keep top N by (count × confidence)
+    # Keep top N by (count Ã— confidence)
     ranked = sorted(significant, 
                    key=lambda e: e['count'] * e['confidence'],
                    reverse=True)
@@ -1812,7 +1848,7 @@ hex_summary = {
 **4. Domain embeddings (future):**
 ```
 Compress domain space using embeddings:
-- "translation.fr_en" → vector[0.2, 0.8, ..., 0.3]
+- "translation.fr_en" â†’ vector[0.2, 0.8, ..., 0.3]
 - Semantic similarity without explicit strings
 - Reduces storage 10-100x
 ```
@@ -1844,13 +1880,13 @@ This architecture provides the foundation for:
 9. **IMPLEMENTATION.md** - Reference code
 
 **Key architectural principles:**
-- ✅ Cryptographic verifiability (Ed25519)
-- ✅ Behavioral grounding (outcomes, not claims)
-- ✅ Fork awareness (protocol-enforced)
-- ✅ Witness verification (reputation staking)
-- ✅ Economic optionality (stakes/bonds as hooks)
-- ✅ Shared ledger requirement (transparent reputation)
-- ✅ Scalable design (caching, sharding, archival)
+- âœ… Cryptographic verifiability (Ed25519)
+- âœ… Behavioral grounding (outcomes, not claims)
+- âœ… Fork awareness (protocol-enforced)
+- âœ… Witness verification (reputation staking)
+- âœ… Economic optionality (stakes/bonds as hooks)
+- âœ… Shared ledger requirement (transparent reputation)
+- âœ… Scalable design (caching, sharding, archival)
 
 ---
 
