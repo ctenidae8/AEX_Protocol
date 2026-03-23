@@ -725,12 +725,6 @@ AEX is experimental infrastructure for the multi-agent era. We need:
 - **Economists** - Design stake/bond mechanisms, analyze attack costs
 - **Lawyers** - Map to regulatory frameworks, liability models
 
-Feedback channels:
-- GitHub Issues: [repo link]
-- Technical Discussion: [forum link]
-- Security Concerns: security@aex-protocol.org
-- Economic Analysis: economics@aex-protocol.org
-
 ---
 
 ## License
